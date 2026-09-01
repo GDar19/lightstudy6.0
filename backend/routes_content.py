@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from typing import Optional
 from db import db, clean, clean_list
 from auth_utils import get_current_user, now_iso, new_id
 from logic import grant_achievement, update_mastery
 from grader import check_answer
+from ai_service import AIService, ai_available
 import content_data as C
 
 router = APIRouter()
@@ -123,6 +125,98 @@ async def lesson_task_answer(lesson_id: str, body: LessonAnswerIn, user: dict = 
     return {"is_correct": is_correct, "correct_answer": task.get("answer"),
             "correct_value": task.get("answer_value"), "type": task.get("type", "single_choice"),
             "explanation": task.get("explanation", ""), "hint": task.get("hint", "")}
+
+
+AI_UNAVAILABLE = "ИИ-помощник временно недоступен. Попробуй ещё раз."
+
+
+class LessonChatIn(BaseModel):
+    message: str
+    task_index: Optional[int] = None
+
+
+def _lesson_context(lesson, task_index, prior_answers, info):
+    parts = [f"Урок: {lesson.get('title')}",
+             f"Предмет: {info.get('subject_name', lesson.get('subject_id'))}",
+             f"Тема: {info.get('name', lesson.get('topic_id'))}"]
+    if lesson.get("explanation"):
+        parts.append(f"Теория урока: {lesson['explanation']}")
+    if lesson.get("key_points"):
+        parts.append("Ключевые моменты: " + "; ".join(lesson["key_points"]))
+    tasks = lesson.get("interactive_tasks", [])
+    if task_index is not None and 0 <= task_index < len(tasks):
+        t = tasks[task_index]
+        parts.append(f"Текущее задание: {t.get('prompt')}")
+        if t.get("options"):
+            parts.append("Варианты ответа: " + "; ".join(f"{chr(1040 + i)}) {o}" for i, o in enumerate(t["options"])))
+        if t.get("type") in ("numeric", "text"):
+            ca = t.get("answer_value")
+        else:
+            ca = t["options"][t["answer"]] if t.get("options") and t.get("answer") is not None else t.get("answer")
+        parts.append(f"Правильный ответ (для тебя, НЕ раскрывай сразу — сначала подсказки): {ca}")
+        if t.get("explanation"):
+            parts.append(f"Объяснение задания: {t['explanation']}")
+        pa = (prior_answers or {}).get(str(task_index)) or (prior_answers or {}).get(task_index)
+        if pa is not None:
+            parts.append(f"Ответ ученика на это задание: «{pa.get('answer')}» ({'верно' if pa.get('is_correct') else 'неверно'})")
+    return "\n".join(parts)
+
+
+@router.get("/lessons/{lesson_id}/chat")
+async def get_lesson_chat(lesson_id: str, user: dict = Depends(get_current_user)):
+    conv = await db.ai_conversations.find_one({"user_id": user["id"], "lesson_id": lesson_id})
+    if not conv:
+        return {"conversation_id": None, "messages": []}
+    msgs = clean_list(await db.ai_messages.find({"conversation_id": conv["id"]}).sort("created_at", 1).to_list(500))
+    return {"conversation_id": conv["id"], "messages": msgs}
+
+
+@router.post("/lessons/{lesson_id}/chat")
+async def lesson_chat(lesson_id: str, body: LessonChatIn, user: dict = Depends(get_current_user)):
+    l = clean(await db.lessons.find_one({"id": lesson_id}))
+    if not l:
+        raise HTTPException(status_code=404, detail="Урок не найден")
+    conv = await db.ai_conversations.find_one({"user_id": user["id"], "lesson_id": lesson_id})
+    if not conv:
+        conv_id = new_id()
+        await db.ai_conversations.insert_one({
+            "id": conv_id, "user_id": user["id"], "lesson_id": lesson_id,
+            "title": f"Урок: {l.get('title')}", "subject_id": l["subject_id"],
+            "topic_id": l["topic_id"], "created_at": now_iso(), "updated_at": now_iso(),
+        })
+    else:
+        conv_id = conv["id"]
+
+    await db.ai_messages.insert_one({
+        "id": new_id(), "conversation_id": conv_id, "role": "user",
+        "content": body.message, "created_at": now_iso(),
+    })
+    history = clean_list(await db.ai_messages.find({"conversation_id": conv_id}).sort("created_at", 1).to_list(20))
+
+    prog = await db.lesson_progress.find_one({"user_id": user["id"], "lesson_id": lesson_id})
+    info = C.topic_index().get(l["topic_id"], {})
+    k = await db.knowledge.find_one({"user_id": user["id"], "topic_id": l["topic_id"]})
+    context = {
+        "name": user.get("name"), "subject_name": info.get("subject_name"),
+        "topic_name": info.get("name"), "lesson_title": l.get("title"),
+        "mastery": (k or {}).get("mastery"),
+        "problem": _lesson_context(l, body.task_index, (prog or {}).get("answers"), info),
+    }
+
+    if not ai_available():
+        answer = AI_UNAVAILABLE
+    else:
+        try:
+            answer = await AIService.generate_answer(conv_id, body.message, context, history[:-1]) or AI_UNAVAILABLE
+        except Exception:
+            answer = AI_UNAVAILABLE
+
+    await db.ai_messages.insert_one({
+        "id": new_id(), "conversation_id": conv_id, "role": "assistant",
+        "content": answer, "created_at": now_iso(),
+    })
+    await db.ai_conversations.update_one({"id": conv_id}, {"$set": {"updated_at": now_iso()}})
+    return {"conversation_id": conv_id, "answer": answer, "available": ai_available()}
 
 
 @router.post("/lessons/{lesson_id}/complete")

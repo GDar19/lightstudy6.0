@@ -1,0 +1,32 @@
+{
+  "summary": "Frontend-only E2E testing of the new in-lesson Фили chat on /app/lessons/l_math_prof_derivative_0 (student smoke1@ls.ru). Verified: lesson-chat block renders (header, message list, 3 quick chips, textarea, send button); free-form question via Enter AND via lesson-chat-send both send and get real Claude answers (no fallback text, no raw LaTeX — verified both in UI and by reading GET /api/lessons/{id}/chat history); Фили evaluates the student's typed answer in context (answered '12' -> Фили explained why it is wrong for its own follow-up question and re-asked); quick chips 'Объясни проще' and 'Дай похожую задачу' both produce real contextual replies; lesson header 'Фили, объясни' (lesson-ask-fili-btn) works; interactive task-0 numeric input + Проверить grades correctly (12 -> ✓ Верно with explanation, 5 -> ✗ Не совсем with explanation); 'Повторить задания' resets tasks so they can be re-answered; 'Завершить урок' switches to 'Повторить урок' and lesson stays fully usable (chat editable, tasks answerable) after completion and after reload; per-lesson chat history persists across reloads (6 -> 12 bubbles accumulated correctly); general ИИ-помощник (/app/tutor) still works independently with a real answer. ONE FUNCTIONAL BUG FOUND: the per-task 'Фили, объясни' button (task-N-ask-fili) does nothing — zero network requests, no message added.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "LessonPage / InteractiveTask", "issue": "Per-task 'Фили, объясни' button is a no-op. InteractiveTask calls onAskFili(index, prompt) but the handler is sendToFili(text, taskIndex=null) — arguments are swapped, so text receives the numeric index, typeof text !== 'string' makes it fall back to the (empty) chatInput and sendToFili returns early. Confirmed by request interception: 0 POST /api/lessons/{id}/chat calls and no bubble added. Side effect: task_index is never sent to the backend, so the per-task context path is unused; and if the textarea happens to contain text, that text would be sent with task_index = a prompt string (invalid payload).", "selector": "[data-testid=\"task-0-ask-fili\"]", "priority": "HIGH"}
+    ],
+    "integration_issues": [
+      {"flow": "Lesson chat vs general tutor separation", "issue": "The per-lesson conversation appears in the general ИИ-помощник sidebar conversation list as 'Урок: Производная функции'. Lesson chat and general tutor answers are functionally independent, but the lesson conversation leaking into the tutor history list may be unintended.", "affected_selectors": ["[data-testid^=\"convo-\"]"]}
+    ],
+    "design_issues": [
+      {"screen": "/app/tutor", "issues": ["Quick-action chip row is horizontally clipped at the right edge ('Краткий к…') on 1920px width — chips overflow the scroll container without a visible scroll affordance"]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix argument order for per-task ask-Фили: either call onAskFili('Помоги разобраться с этим заданием: ' + task.prompt, index) or change the handler signature so LessonPage receives (index, text) and forwards task_index correctly, then re-verify a POST /api/lessons/{id}/chat with task_index is sent",
+    "Decide whether per-lesson conversations should be hidden from the general /app/tutor conversation list"
+  ],
+  "critical_code_review_comments": [
+    "LessonPage.sendToFili(text, taskIndex) vs InteractiveTask.onAskFili(index, prompt) signature mismatch — silent early return; add a guard/log when msg is empty instead of failing silently",
+    "replayTasks() only resets client state (replayKey + lesson.prior_answers = {}); after a page reload prior answers reappear from the backend, so 'Повторить задания' is not persisted — consider a backend reset endpoint if the reset should survive reload"
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (skipped per request)", "frontend": "90% (9/10 lesson-chat scenarios pass; per-task ask-Фили fails)"},
+  "seed_data_creation": "No new data seeded; used existing student smoke1@ls.ru and lesson l_math_prof_derivative_0 (added chat messages + task answers to that lesson).",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "smoke1@ls.ru / test123 (student). /app/memory/test_credentials.md lists admin@lightstudy.ru/admin123 and student@lightstudy.ru/student123 but does NOT list smoke1@ls.ru — consider adding it.",
+  "context_for_next_testing_agent": "Lesson under test: /app/lessons/l_math_prof_derivative_0 (topic derivative, math_prof). Its chat history now has 12+ messages and task 0 has a prior answer, so task-0-ask-fili renders on load. Playwright counting tip: the typing indicator inside [data-testid=lesson-chat-messages] is also a 'div.flex' bubble — count assertions must exclude it or wait for it to disappear. Login redirects to /app (not /app/dashboard), so avoid wait_for_url('**/app/**').",
+  "rca_of_the_issue": "Per-task 'Фили, объясни' no-op RCA: InteractiveTask.askFili = () => onAskFili(index, prompt); LessonPage passes onAskFili={sendToFili} whose signature is (text, taskIndex). Therefore text = 0 (number). Since typeof text !== 'string', sendToFili uses chatInput (empty) => msg = '' => early return. Repro: open lesson with a graded task, click [data-testid=task-0-ask-fili] — no bubble, no /chat request."
+}

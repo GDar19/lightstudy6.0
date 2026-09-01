@@ -87,8 +87,10 @@ async def ai_status(user: dict = Depends(get_current_user)):
 
 @router.get("/ai/conversations")
 async def conversations(user: dict = Depends(get_current_user)):
+    # exclude per-lesson conversations (lesson_id null/missing matches general chats only)
     convs = clean_list(await db.ai_conversations.find(
-        {"user_id": user["id"]}).sort("updated_at", -1).to_list(50))
+        {"user_id": user["id"], "lesson_id": None}
+    ).sort("updated_at", -1).to_list(50))
     return convs
 
 

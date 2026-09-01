@@ -52,6 +52,8 @@ export const api = {
   lesson: (id) => client.get(`/lessons/${id}`),
   completeLesson: (id) => client.post(`/lessons/${id}/complete`),
   lessonTaskAnswer: (id, d) => client.post(`/lessons/${id}/task-answer`, d),
+  lessonChat: (id) => client.get(`/lessons/${id}/chat`),
+  lessonChatSend: (id, d) => client.post(`/lessons/${id}/chat`, d),
   textbooks: () => client.get("/textbooks"),
   // diagnostics
   startDiagnostic: (subject_id) => client.post("/diagnostics/start", { subject_id }),
