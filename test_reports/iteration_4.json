@@ -1,0 +1,56 @@
+{
+  "summary": "E2E frontend verification of the Admin panel + Knowledge Base (RAG) module, plus playbook auth checks. Admin login (admin@lightstudy.ru), /app/admin route, all 5 tabs, KB tab rendering, PDF upload -> GridFS -> text extraction -> chunking -> 'Проиндексирован' status, TF-IDF semantic search, reprocess and delete ALL PASS when a real Cyrillic PDF is used. The pre-created /app/test_reports/sample_derivative.pdf contains transliterated LATIN text (fpdf Helvetica cannot encode Cyrillic), so the Russian query 'производная функции' correctly returned 0 results on the first run — this was test-data, not an app bug. I generated /app/test_reports/sample_derivative_ru.pdf (Cyrillic, via LiberationSans) and the full flow including RAG search passed (top hit score 0.66, page 1, correct doc title). Backend regression suite added: 8/9 passed (only the CORS-credentials assertion failed, see below).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "CORS (server.py:39-45)", "issue": "allow_origin_regex='.*' + allow_credentials=True is a wildcard-with-credentials anti-pattern (playbook requires explicit origins). Preflight through ingress returns Access-Control-Allow-Origin: * and NO Access-Control-Allow-Credentials, so cross-origin cookie auth would break; it works today only because frontend and backend share the same host."},
+      {"endpoint": "POST /api/admin/kb/upload", "issue": "No max file size / page limit. Whole PDF is read into memory (await file.read()) and kb_service.process_document runs pypdf extract_text() synchronously inside the event loop via BackgroundTasks -> a real 400-page textbook will block the whole FastAPI worker. Offload to a thread (asyncio.to_thread / run_in_executor)."},
+      {"endpoint": "POST /api/admin/kb/search", "issue": "kb_service.retrieve() loads only .to_list(2000) chunks and refits TfidfVectorizer on EVERY query. Chunks beyond 2000 are silently never searchable (one large textbook exceeds this), and query latency grows linearly with KB size. No vectors are persisted despite 'embeddings' in the spec."},
+      {"endpoint": "POST /api/admin/kb/search", "issue": "retrieve() falls back to ALL chunks when a subject filter yields none, so a subject-scoped RAG request can silently return off-subject material (misleading citations)."},
+      {"endpoint": "POST /api/admin/kb/{id}/reprocess", "issue": "process_document inserts chunks one-by-one with insert_one in a loop; use insert_many for large docs."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "KB delete", "issue": "Transient stale row after delete: the 4s poll GET /api/admin/kb can be in flight when DELETE completes, and its late response overwrites the optimistic setDocs filter, so the deleted row can briefly reappear until the next poll. Observed once in run 1 (row still visible ~3s after a successful DELETE 200); DB confirmed the doc was gone. Fix: ignore in-flight poll responses after a mutation (request id/abort) or await load() instead of optimistic filter.", "affected_selectors": ["kb-doc-<id>", "kb-delete-<id>"]},
+      {"flow": "AI tutor RAG usage", "issue": "The indexed knowledge base is only used as RAG context in POST /api/ai/generate-question (routes_ai.py:189-197). /ai/explain-topic and the tutor chat do NOT call kb_service.retrieve, so uploaded textbooks do not influence the main AI answers the user asked for. Also every RAG path is wrapped in a bare 'except Exception' that silently degrades to AI_UNAVAILABLE, hiding retrieval failures.", "affected_selectors": []}
+    ],
+    "design_issues": [
+      {"screen": "Admin > База знаний", "issues": ["No loading skeleton/spinner while GET /api/admin/kb resolves — the panel first paints 'Документы (0) / Пока нет загруженных документов' and then swaps in the real list (visible flash, looks like data loss).", "kb-delete has no confirmation dialog: a single click permanently destroys the document, its GridFS file and all chunks.", "Plural bug in list meta: renders '1 фрагментов' (should be '1 фрагмент').", "Search subject <select> has no data-testid (only kb-search-input / kb-search-btn), making the subject-filtered RAG path awkward to automate."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_kb_and_auth_playbook.py",
+    "/app/backend/tests/kb_probe.py",
+    "/app/test_reports/gen_test_pdf_ru.py",
+    "/app/test_reports/pytest/kb_playbook.xml"
+  ],
+  "action_items": [
+    "Replace/augment the demo PDF: /app/test_reports/sample_derivative.pdf holds transliterated Latin text, so Russian RAG queries return nothing. Use /app/test_reports/sample_derivative_ru.pdf (already generated) for demos and docs.",
+    "Wire kb_service.retrieve + build_rag_context into the AI tutor / explain-topic endpoints, not just generate-question, and stop swallowing retrieval errors with bare except.",
+    "Offload PDF parsing/chunking off the event loop and cap upload size; use insert_many for chunks.",
+    "Remove the 2000-chunk cap in retrieve() and persist TF-IDF vectors (or search per-document) so large textbooks stay searchable.",
+    "Fix the delete/poll race in KnowledgeBase.jsx (abort or version in-flight polls) and add a delete confirmation.",
+    "Restrict CORS to explicit origins with allow_credentials=True instead of allow_origin_regex='.*'.",
+    "Fix '1 фрагментов' pluralization and add a loading state + data-testid for the search subject select."
+  ],
+  "critical_code_review_comments": [
+    "kb_service.process_document: pypdf extract_text() is CPU-bound and sync; running it in a FastAPI BackgroundTask blocks the event loop for the whole app on real textbooks.",
+    "kb_service.retrieve: refitting TfidfVectorizer per query over a hard-capped 2000-chunk slice is not a real embedding index — it silently drops content and scales O(corpus) per request.",
+    "routes_ai.py:198 bare 'except Exception: return AI_UNAVAILABLE' masks RAG/LLM failures with no logging.",
+    "KnowledgeBase.jsx: optimistic state updates combined with a 4s interval poll create write-after-read races (delete/reprocess); no request cancellation on unmount-in-flight."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_kb_and_auth_playbook.py",
+    "/app/backend/tests/kb_probe.py",
+    "/app/test_reports/gen_test_pdf_ru.py"
+  ],
+  "success_rate": {"backend": "89% (8/9 pytest; only the CORS-credentials assertion failed)", "frontend": "100% of KB E2E steps passed with a valid Cyrillic PDF (login, tabs, upload, indexing, search, subject-filtered search, reprocess, delete, validation toast)"},
+  "seed_data_creation": "Created and deleted TEST_ KB documents (TEST_Производная функции, TEST_RU_Производная, TEST_API_Производная) — all removed. Registered TEST_lockout_probe@example.com for the brute-force lockout test (now locked, left in DB). Added Cyrillic fixture PDF /app/test_reports/sample_derivative_ru.pdf. Pre-existing doc 'Тест Производная' (test.pdf) left untouched.",
+  "should_call_test_agent_after_fix": true,
+  "should_main_agent_self_test": false,
+  "test_credentials": "admin@lightstudy.ru / admin123 (verified working, role=admin, bcrypt $2b$ hash, httpOnly access+refresh cookies)",
+  "context_for_next_testing_agent": "Admin panel is at /app/admin (not /admin); KB is the 'kb' tab (data-testid=admin-tab-kb) rendering data-testid=kb-panel. ALWAYS upload /app/test_reports/sample_derivative_ru.pdf for RAG tests — the older sample_derivative.pdf/test.pdf contain Latin transliteration and will make Russian searches return 0 hits (false failure). Regression suite: pytest /app/backend/tests/test_kb_and_auth_playbook.py (do NOT pass -n; pytest.ini already sets xdist). Playbook auth verified: bcrypt $2b$ PASS, httpOnly cookies + cookie-only /api/auth/me PASS, lockout after 5 fails PASS, seed_admin password valid PASS, CORS FAIL (wildcard regex + ingress strips allow-credentials). Un-retested area: whether uploaded KB content actually reaches AI answers (only generate-question is wired).",
+  "rca_of_the_issue": "Initial 'semantic search returns nothing' failure: /app/test_reports/sample_derivative.pdf was generated with fpdf's Helvetica core font, which cannot encode Cyrillic, so its content is Latin transliteration ('Proizvodnaya funkcii ...'). Direct DB probe (/app/backend/tests/kb_probe.py) showed 1 indexed chunk with transliterated text and TF-IDF cosine = 0.0 for the Russian query, while transliterated queries scored 0.15-0.34 — i.e. extraction/chunking/retrieval all work; there was simply zero lexical overlap. Re-running the identical E2E flow with a Cyrillic PDF (LiberationSans embedded) returned a relevant chunk at score 0.66. Note that TF-IDF is purely lexical, so genuine paraphrases/synonyms in Russian will still miss — a real embedding model would be needed for true semantic recall."
+}

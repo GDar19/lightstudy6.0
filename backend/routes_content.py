@@ -196,11 +196,19 @@ async def lesson_chat(lesson_id: str, body: LessonChatIn, user: dict = Depends(g
     prog = await db.lesson_progress.find_one({"user_id": user["id"], "lesson_id": lesson_id})
     info = C.topic_index().get(l["topic_id"], {})
     k = await db.knowledge.find_one({"user_id": user["id"], "topic_id": l["topic_id"]})
+    problem = _lesson_context(l, body.task_index, (prog or {}).get("answers"), info)
+    try:
+        import kb_service
+        snippets = await kb_service.retrieve(l["subject_id"], f"{info.get('name','')} {body.message}", k=2)
+        material, _ = kb_service.build_rag_context(snippets)
+        if material:
+            problem += "\n\n" + material
+    except Exception:
+        pass
     context = {
         "name": user.get("name"), "subject_name": info.get("subject_name"),
         "topic_name": info.get("name"), "lesson_title": l.get("title"),
-        "mastery": (k or {}).get("mastery"),
-        "problem": _lesson_context(l, body.task_index, (prog or {}).get("answers"), info),
+        "mastery": (k or {}).get("mastery"), "problem": problem,
     }
 
     if not ai_available():

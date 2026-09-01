@@ -186,11 +186,15 @@ async def generate_question(body: GenQuestionIn, user: dict = Depends(get_curren
     if not ai_available():
         return {"question": None, "available": False, "message": AI_UNAVAILABLE}
     try:
+        import kb_service
+        subject_id = idx.get(body.topic_id, {}).get("subject_id") if body.topic_id else None
+        snippets = await kb_service.retrieve(subject_id, topic_name or subject_name or "", k=3)
+        material, sources = kb_service.build_rag_context(snippets)
         q = await AIService.generate_question(new_id(), topic_name or "тема",
-                                              subject_name or "предмет", body.difficulty)
+                                              subject_name or "предмет", body.difficulty, material)
         if not q:
             return {"question": None, "available": True, "message": "Не удалось сгенерировать задание"}
-        return {"question": q, "available": True, "generated": True}
+        return {"question": q, "available": True, "generated": True, "sources": sources}
     except Exception:
         return {"question": None, "available": True, "message": AI_UNAVAILABLE}
 

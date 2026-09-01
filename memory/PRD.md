@@ -59,9 +59,17 @@ profile & difficulty update → next task. Real data only (zeros/empty states fo
 - Email/Telegram notifications (notification service is modular).
 - Teacher/parent accounts, subscriptions/payments, classroom analytics.
 
-## Known notes
-- Seed content is demo/educational, not official EGE questions (labeled in UI/README).
-- `days_until_exam` clamps to 0 for past dates.
+## Verification round (2026-06) — Admin + Knowledge Base (RAG)
+- E2E frontend test PASSED 100%: admin login, /app/admin route, all 5 tabs, «База знаний» tab, PDF upload → GridFS → text extraction → chunking → «Проиндексирован», TF-IDF semantic search, reprocess, delete.
+- Confirmed backend playbook auth: bcrypt $2b$, httpOnly access+refresh cookies, cookie-only /api/auth/me, 5-fail lockout, valid seed admin.
+- Polish fixes applied to KnowledgeBase.jsx: delete confirmation dialog, delete/poll race guard (removedRef), Russian pluralization (1 фрагмент/страница), data-testid on search subject select.
+- Admin creds: admin@lightstudy.ru / admin123. KB is a TAB in /app/admin, not a route.
+
+### Findings surfaced to user (not yet actioned — need decision)
+- **RAG reaches only generate-question**: uploaded textbooks feed `POST /api/ai/generate-question` but NOT the Fili tutor chat / explain-topic. To make textbooks influence the main AI answers, wire `kb_service.retrieve` into those endpoints. (P1)
+- **Scalability**: TF-IDF refit per query, 2000-chunk cap in retrieve(), sync PDF parsing on event loop, one-by-one chunk inserts — fine for demo, will not scale to real 400-page textbooks. (P1)
+- **CORS**: allow_origin_regex='.*' + credentials works only same-host; restrict to explicit origins for prod. (P2)
+- For RAG demos use a Cyrillic PDF (`/app/test_reports/sample_derivative_ru.pdf`); the Latin-transliteration sample returns 0 hits since TF-IDF is purely lexical.
 
 ## Enhancement round 2 (2026-06)
 - **12 EGE subjects** (added Математика база, Химия, История, География, Английский, Литература); admin can enable/disable each.

@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Shield, Users, HelpCircle, BarChart3, Trash2, Plus, BookOpen } from "lucide-react";
+import { Shield, Users, HelpCircle, BarChart3, Trash2, Plus, BookOpen, Database } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { Loader, EmptyState, DifficultyBadge } from "@/components/common";
+import KnowledgeBase from "@/pages/KnowledgeBase";
 
 const TABS = [
-  { id: "stats", label: "Статистика", icon: BarChart3 },
+  { id: "stats", label: "Дашборд", icon: BarChart3 },
   { id: "users", label: "Пользователи", icon: Users },
   { id: "subjects", label: "Предметы", icon: BookOpen },
-  { id: "questions", label: "Вопросы", icon: HelpCircle },
+  { id: "kb", label: "База знаний", icon: Database },
+  { id: "questions", label: "Задания", icon: HelpCircle },
 ];
 
 export default function Admin() {
@@ -106,6 +108,8 @@ export default function Admin() {
           </table>
         </div>
       )}
+
+      {tab === "kb" && <KnowledgeBase subjects={subjects} />}
 
       {tab === "subjects" && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

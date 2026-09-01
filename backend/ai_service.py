@@ -72,12 +72,15 @@ class AIService:
         return await _ask(session_id, TUTOR_PERSONA, prompt)
 
     @staticmethod
-    async def generate_question(session_id: str, topic_name: str, subject_name: str, difficulty: str = "medium") -> dict:
+    async def generate_question(session_id: str, topic_name: str, subject_name: str, difficulty: str = "medium", source_material: str = "") -> dict:
+        material = f"\n\n{source_material}\n" if source_material else ""
         prompt = (
-            f"Сгенерируй ОДНО тренировочное задание по теме «{topic_name}» ({subject_name}), "
-            f"уровень сложности: {difficulty}. Верни СТРОГО валидный JSON без пояснений в формате: "
+            f"Сгенерируй ОДНО тренировочное задание уровня ЕГЭ по теме «{topic_name}» ({subject_name}), "
+            f"сложность: {difficulty}. Задание должно соответствовать формату, терминологии и уровню реального ЕГЭ, "
+            f"НЕ быть элементарным или общим, требовать применения знаний (возможно, нескольких шагов).{material}"
+            "Верни СТРОГО валидный JSON без пояснений: "
             '{"question": "...", "options": ["A","B","C","D"], "answer": 0, "explanation": "..."}. '
-            "answer — индекс правильного варианта (0-3). Пометь, что это тренировочное задание."
+            "answer — индекс правильного варианта (0-3). Это тренировочное задание, не официальный вопрос ЕГЭ."
         )
         raw = await _ask(session_id, TUTOR_PERSONA, prompt)
         if not raw:
