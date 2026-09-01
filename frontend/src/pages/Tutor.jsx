@@ -25,7 +25,9 @@ export default function Tutor() {
   const [sending, setSending] = useState(false);
   const [available, setAvailable] = useState(true);
   const scrollRef = useRef(null);
+  const autoSentRef = useRef(false);
   const topicId = params.get("topic");
+  const lessonId = params.get("lesson");
 
   const loadConvos = () => api.aiConversations().then(({ data }) => setConvos(data)).catch(() => {});
 
@@ -33,7 +35,10 @@ export default function Tutor() {
     api.aiStatus().then(({ data }) => setAvailable(data.available)).catch(() => {});
     loadConvos();
     const q = params.get("q");
-    if (q) { setTimeout(() => send(q), 300); }
+    if (q && !autoSentRef.current) {
+      autoSentRef.current = true;
+      setTimeout(() => send(q), 300);
+    }
     // eslint-disable-next-line
   }, []);
 
@@ -56,7 +61,7 @@ export default function Tutor() {
     setMessages((m) => [...m, { role: "user", content: text, id: `tmp-${Date.now()}` }]);
     setSending(true);
     try {
-      const { data } = await api.aiChat({ message: text, conversation_id: convId, topic_id: topicId || null });
+      const { data } = await api.aiChat({ message: text, conversation_id: convId, topic_id: topicId || null, lesson_id: lessonId || null });
       setConvId(data.conversation_id);
       setAvailable(data.available);
       setMessages((m) => [...m, { role: "assistant", content: data.answer, id: `a-${Date.now()}` }]);

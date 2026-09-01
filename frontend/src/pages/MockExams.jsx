@@ -60,13 +60,29 @@ function Running({ exam, onDone }) {
         <div className="flex items-center gap-2 mb-3"><DifficultyBadge level={q.difficulty} /><span className="text-xs text-[#8A94A6]">{q.ege_category}</span></div>
         <div className="font-display text-lg font-semibold text-[#1E2A4A] whitespace-pre-line">{q.question}</div>
         <div className="mt-5 space-y-3">
-          {q.options.map((o, i) => (
-            <button key={i} onClick={() => setAnswers((a) => ({ ...a, [q.id]: i }))} data-testid={`mock-option-${i}`}
-              className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${answers[q.id] === i ? "border-[#7C66DC] bg-[#EEEAFB]" : "border-[#E5DEC9] bg-[#FAF8F3] hover:border-[#C5BCFA]"}`}>
-              <span className="w-8 h-8 shrink-0 rounded-lg bg-white border border-[#E5DEC9] flex items-center justify-center font-semibold text-sm">{LETTERS[i]}</span>
-              <span className="text-[#1E2A4A]">{o}</span>
-            </button>
-          ))}
+          {(q.type === "single_choice" || q.type === "true_false" || q.type === "multiple_choice") &&
+            q.options.map((o, i) => {
+              const val = answers[q.id];
+              const picked = q.type === "multiple_choice" ? Array.isArray(val) && val.includes(i) : val === i;
+              return (
+                <button key={i} onClick={() => setAnswers((a) => {
+                  if (q.type === "multiple_choice") {
+                    const cur = Array.isArray(a[q.id]) ? a[q.id] : [];
+                    return { ...a, [q.id]: cur.includes(i) ? cur.filter((x) => x !== i) : [...cur, i] };
+                  }
+                  return { ...a, [q.id]: i };
+                })} data-testid={`mock-option-${i}`}
+                  className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${picked ? "border-[#7C66DC] bg-[#EEEAFB]" : "border-[#E5DEC9] bg-[#FAF8F3] hover:border-[#C5BCFA]"}`}>
+                  <span className="w-8 h-8 shrink-0 rounded-lg bg-white border border-[#E5DEC9] flex items-center justify-center font-semibold text-sm">{LETTERS[i]}</span>
+                  <span className="text-[#1E2A4A]">{o}</span>
+                </button>
+              );
+            })}
+          {(q.type === "numeric" || q.type === "text") && (
+            <input value={answers[q.id] ?? ""} onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
+              data-testid="mock-answer-input" placeholder={q.type === "numeric" ? "Введите число" : "Введите ответ"}
+              className="w-full px-4 py-3 rounded-xl border-2 border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]" />
+          )}
         </div>
         <div className="flex items-center justify-between mt-6">
           <button onClick={() => setIdx((i) => Math.max(0, i - 1))} disabled={idx === 0}
@@ -116,8 +132,8 @@ function Result({ result, onBack }) {
             {result.review.map((r, i) => (
               <div key={i} className="p-4 rounded-xl bg-[#FAF8F3] border border-[#E5DEC9]">
                 <div className="font-medium text-[#1E2A4A]">{r.question}</div>
-                <div className="text-sm text-[#EF4444] mt-2 flex items-center gap-1.5"><X className="w-4 h-4" /> Твой ответ: {r.options[r.student_answer] ?? "—"}</div>
-                <div className="text-sm text-[#10B981] flex items-center gap-1.5"><Check className="w-4 h-4" /> Правильно: {r.options[r.correct_answer]}</div>
+                <div className="text-sm text-[#EF4444] mt-2 flex items-center gap-1.5"><X className="w-4 h-4" /> Твой ответ: {(r.type === "numeric" || r.type === "text") ? (r.student_answer ?? "—") : (r.options[r.student_answer] ?? "—")}</div>
+                <div className="text-sm text-[#10B981] flex items-center gap-1.5"><Check className="w-4 h-4" /> Правильно: {(r.type === "numeric" || r.type === "text") ? (Array.isArray(r.correct_value) ? r.correct_value.join(" / ") : r.correct_value) : r.options[r.correct_answer]}</div>
                 {r.explanation && <p className="text-sm text-[#4B5563] mt-2">{r.explanation}</p>}
               </div>
             ))}

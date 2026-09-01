@@ -32,6 +32,8 @@ class ChatIn(BaseModel):
     conversation_id: Optional[str] = None
     subject_id: Optional[str] = None
     topic_id: Optional[str] = None
+    lesson_id: Optional[str] = None
+    problem: Optional[str] = None
 
 
 class ExplainIn(BaseModel):
@@ -54,7 +56,7 @@ class AnalyzeIn(BaseModel):
     correct_answer: Optional[str] = None
 
 
-async def _build_context(user, subject_id=None, topic_id=None):
+async def _build_context(user, subject_id=None, topic_id=None, lesson_id=None, problem=None):
     ctx = {"name": user.get("name"), "target_score": user.get("target_score")}
     idx = C.topic_index()
     if topic_id and topic_id in idx:
@@ -67,6 +69,12 @@ async def _build_context(user, subject_id=None, topic_id=None):
         s = await db.subjects.find_one({"id": subject_id})
         if s:
             ctx["subject_name"] = s["name"]
+    if lesson_id:
+        l = await db.lessons.find_one({"id": lesson_id})
+        if l:
+            ctx["lesson_title"] = l.get("title")
+    if problem:
+        ctx["problem"] = problem
     weak = await db.knowledge.find({"user_id": user["id"]}).sort("mastery", 1).to_list(3)
     ctx["weak_topics"] = [w["topic_name"] for w in weak if w.get("attempts", 0) > 0]
     return ctx
@@ -121,7 +129,7 @@ async def chat(body: ChatIn, user: dict = Depends(get_current_user)):
 
     history = clean_list(await db.ai_messages.find(
         {"conversation_id": conv_id}).sort("created_at", 1).to_list(20))
-    context = await _build_context(user, body.subject_id, body.topic_id)
+    context = await _build_context(user, body.subject_id, body.topic_id, body.lesson_id, body.problem)
 
     if not ai_available():
         answer = AI_UNAVAILABLE

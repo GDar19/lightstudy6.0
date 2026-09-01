@@ -1,15 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Any
 
 from db import db, clean, clean_list
 from auth_utils import get_current_user, new_id, now_iso
 from logic import build_knowledge_from_diagnostic, grant_achievement, generate_study_plan
+from grader import check_answer
 import content_data as C
 
 router = APIRouter()
 
-DIAG_SIZE = 10
+DIAG_SIZE = 12
 
 
 class StartIn(BaseModel):
@@ -18,15 +19,16 @@ class StartIn(BaseModel):
 
 class AnswerIn(BaseModel):
     question_id: str
-    answer: int
+    answer: Any
 
 
 def strip_answer(q: dict) -> dict:
     """Question payload sent to client without the correct answer/explanation."""
     return {
-        "id": q["id"], "question": q["question"], "options": q["options"],
+        "id": q["id"], "question": q["question"], "options": q.get("options", []),
         "difficulty": q["difficulty"], "topic_id": q["topic_id"],
-        "ege_category": q.get("ege_category"),
+        "type": q.get("type", "single_choice"), "hint": q.get("hint", ""),
+        "exam_part": q.get("exam_part", ""), "ege_category": q.get("ege_category"),
     }
 
 
@@ -38,8 +40,9 @@ async def start_diagnostic(body: StartIn, user: dict = Depends(get_current_user)
     questions = clean_list(await db.questions.find({"subject_id": body.subject_id}).to_list(200))
     if not questions:
         raise HTTPException(status_code=400, detail="Для этого предмета пока нет вопросов")
-    # spread across topics and difficulties, take up to DIAG_SIZE
-    questions_sorted = sorted(questions, key=lambda q: (q["topic_id"], q["difficulty"]))
+    # spread across topics, biased toward EGE-level (harder first within each topic)
+    _rank = {"ege": 0, "hard": 1, "medium": 2, "easy": 3}
+    questions_sorted = sorted(questions, key=lambda q: (q["topic_id"], _rank.get(q["difficulty"], 2)))
     selected = questions_sorted[:DIAG_SIZE] if len(questions_sorted) <= DIAG_SIZE else _spread(questions_sorted)
     diag_id = new_id()
     await db.diagnostics.insert_one({
@@ -79,14 +82,16 @@ async def answer_diagnostic(diag_id: str, body: AnswerIn, user: dict = Depends(g
     q = clean(await db.questions.find_one({"id": body.question_id}))
     if not q:
         raise HTTPException(status_code=404, detail="Вопрос не найден")
-    is_correct = body.answer == q["answer"]
+    is_correct = check_answer(q, body.answer)
     answers = [a for a in diag.get("answers", []) if a["question_id"] != body.question_id]
     answers.append({
         "question_id": body.question_id, "topic_id": q["topic_id"],
-        "answer": body.answer, "is_correct": is_correct,
+        "answer": body.answer, "is_correct": is_correct, "difficulty": q["difficulty"],
     })
     await db.diagnostics.update_one({"id": diag_id}, {"$set": {"answers": answers}})
-    return {"is_correct": is_correct, "correct_answer": q["answer"], "explanation": q["explanation"]}
+    return {"is_correct": is_correct, "correct_answer": q.get("answer"),
+            "correct_value": q.get("answer_value"), "type": q.get("type", "single_choice"),
+            "explanation": q["explanation"], "hint": q.get("hint", "")}
 
 
 @router.post("/diagnostics/{diag_id}/finish")
@@ -99,9 +104,10 @@ async def finish_diagnostic(diag_id: str, user: dict = Depends(get_current_user)
     answers = diag.get("answers", [])
     per_topic = {}
     for a in answers:
-        st = per_topic.setdefault(a["topic_id"], {"correct": 0, "total": 0})
+        st = per_topic.setdefault(a["topic_id"], {"correct": 0, "total": 0, "records": []})
         st["total"] += 1
         st["correct"] += 1 if a["is_correct"] else 0
+        st["records"].append({"is_correct": a["is_correct"], "difficulty": a.get("difficulty", "medium")})
 
     subject_id = diag["subject_id"]
     await build_knowledge_from_diagnostic(user["id"], subject_id, per_topic)

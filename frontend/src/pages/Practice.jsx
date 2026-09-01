@@ -11,6 +11,8 @@ function Picker({ onStart }) {
   const [subject, setSubject] = useState("");
   const [topics, setTopics] = useState([]);
   const [topic, setTopic] = useState("");
+  const [difficulty, setDifficulty] = useState("");
+  const [count, setCount] = useState(10);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,10 +33,12 @@ function Picker({ onStart }) {
 
   if (loading) return <Loader />;
 
+  const DIFFS = [["", "Адаптивно"], ["easy", "Базовая"], ["medium", "Средняя"], ["hard", "Сложная"], ["ege", "ЕГЭ"]];
+
   return (
     <div className="max-w-lg mx-auto ls-card p-7">
       <h2 className="font-display text-xl font-bold text-[#1E2A4A] mb-1">Начать практику</h2>
-      <p className="text-sm text-[#8A94A6] mb-5">Выбери предмет и тему для тренировки.</p>
+      <p className="text-sm text-[#8A94A6] mb-5">Настрой параметры тренировки под подготовку к ЕГЭ.</p>
       <label className="text-sm font-medium text-[#1E2A4A]">Предмет</label>
       <select data-testid="practice-subject-select" value={subject} onChange={(e) => { setSubject(e.target.value); setTopic(""); }}
         className="mt-1.5 mb-4 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]">
@@ -45,13 +49,29 @@ function Picker({ onStart }) {
         <>
           <label className="text-sm font-medium text-[#1E2A4A]">Тема</label>
           <select data-testid="practice-topic-select" value={topic} onChange={(e) => setTopic(e.target.value)}
-            className="mt-1.5 mb-5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]">
+            className="mt-1.5 mb-4 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]">
             <option value="">Все темы предмета</option>
             {topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <div>
+              <label className="text-sm font-medium text-[#1E2A4A]">Сложность</label>
+              <select data-testid="practice-difficulty-select" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}
+                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]">
+                {DIFFS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-[#1E2A4A]">Количество</label>
+              <select data-testid="practice-count-select" value={count} onChange={(e) => setCount(+e.target.value)}
+                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]">
+                {[5, 10, 20, 30].map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </div>
+          </div>
         </>
       )}
-      <button disabled={!subject} onClick={() => onStart(subject, topic)} data-testid="start-practice-btn"
+      <button disabled={!subject} onClick={() => onStart(subject, topic, { difficulty, count })} data-testid="start-practice-btn"
         className="btn-accent w-full inline-flex items-center justify-center gap-2 disabled:opacity-50">
         <Dumbbell className="w-4 h-4" /> Начать
       </button>
@@ -66,11 +86,14 @@ export default function Practice() {
   const [starting, setStarting] = useState(false);
   const [result, setResult] = useState(null);
 
-  const start = async (subject, topic, mode = "adaptive") => {
+  const start = async (subject, topic, opts = {}) => {
+    const mode = typeof opts === "string" ? opts : (opts.mode || "adaptive");
+    const difficulty = typeof opts === "object" ? opts.difficulty || null : null;
+    const count = typeof opts === "object" ? opts.count || 10 : 10;
     setStarting(true);
     setResult(null);
     try {
-      const { data } = await api.startPractice({ subject_id: subject, topic_id: topic || null, mode });
+      const { data } = await api.startPractice({ subject_id: subject, topic_id: topic || null, mode, difficulty, count });
       setSession(data);
     } catch (e) {
       toast.error(e.response?.data?.detail || "Не удалось начать практику");

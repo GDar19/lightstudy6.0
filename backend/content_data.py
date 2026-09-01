@@ -396,9 +396,14 @@ ACHIEVEMENTS = [
 
 
 def topic_index():
-    """Return {topic_id: {name, subject_id, section_id, section_name}}"""
+    """Return {topic_id: {name, subject_id, section_id, section_name}} across all subjects."""
     idx = {}
-    for s in SUBJECTS:
+    try:
+        import content_extra as _E
+        all_subjects = SUBJECTS + _E.EXTRA_SUBJECTS
+    except Exception:
+        all_subjects = SUBJECTS
+    for s in all_subjects:
         for sec in s["sections"]:
             for t in sec["topics"]:
                 idx[t["id"]] = {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Shield, Users, HelpCircle, BarChart3, Trash2, Plus } from "lucide-react";
+import { Shield, Users, HelpCircle, BarChart3, Trash2, Plus, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { api, formatApiError } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
@@ -8,6 +8,7 @@ import { Loader, EmptyState, DifficultyBadge } from "@/components/common";
 const TABS = [
   { id: "stats", label: "Статистика", icon: BarChart3 },
   { id: "users", label: "Пользователи", icon: Users },
+  { id: "subjects", label: "Предметы", icon: BookOpen },
   { id: "questions", label: "Вопросы", icon: HelpCircle },
 ];
 
@@ -18,18 +19,24 @@ export default function Admin() {
   const [users, setUsers] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [subjectsAll, setSubjectsAll] = useState([]);
   const [topics, setTopics] = useState([]);
   const [filterSubject, setFilterSubject] = useState("");
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ subject_id: "", topic_id: "", difficulty: "medium", question: "", options: ["", "", "", ""], answer: 0, explanation: "", ege_category: "" });
+  const [form, setForm] = useState({ subject_id: "", topic_id: "", difficulty: "medium", type: "single_choice", question: "", options: ["", "", "", ""], answer: 0, answer_value: "", explanation: "", hint: "", exam_part: "", ege_category: "" });
 
   useEffect(() => {
     if (user?.role !== "admin") { setLoading(false); return; }
-    Promise.all([api.adminStats(), api.adminUsers(), api.subjects(), api.adminTopics()]).then(([s, u, sub, t]) => {
-      setStats(s.data); setUsers(u.data); setSubjects(sub.data); setTopics(t.data);
+    Promise.all([api.adminStats(), api.adminUsers(), api.subjects(), api.adminTopics(), api.adminSubjectsAll()]).then(([s, u, sub, t, sa]) => {
+      setStats(s.data); setUsers(u.data); setSubjects(sub.data); setTopics(t.data); setSubjectsAll(sa.data);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [user]);
+
+  const toggleSubj = async (sid, enabled) => {
+    await api.toggleSubject(sid, enabled);
+    setSubjectsAll((list) => list.map((s) => s.id === sid ? { ...s, enabled } : s));
+  };
 
   const loadQuestions = (subj) => api.adminQuestions(subj || undefined).then(({ data }) => setQuestions(data));
   useEffect(() => { if (tab === "questions" && user?.role === "admin") loadQuestions(filterSubject); }, [tab, filterSubject]);
@@ -46,7 +53,7 @@ export default function Admin() {
       toast.success("Вопрос добавлен");
       setShowForm(false);
       loadQuestions(filterSubject);
-      setForm({ subject_id: "", topic_id: "", difficulty: "medium", question: "", options: ["", "", "", ""], answer: 0, explanation: "", ege_category: "" });
+      setForm({ subject_id: "", topic_id: "", difficulty: "medium", type: "single_choice", question: "", options: ["", "", "", ""], answer: 0, answer_value: "", explanation: "", hint: "", exam_part: "", ege_category: "" });
     } catch (e) { toast.error(formatApiError(e.response?.data?.detail)); }
   };
 
@@ -100,6 +107,23 @@ export default function Admin() {
         </div>
       )}
 
+      {tab === "subjects" && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {subjectsAll.map((s) => (
+            <div key={s.id} className="ls-card p-5 flex items-center justify-between" data-testid={`admin-subject-${s.id}`}>
+              <div>
+                <div className="font-medium text-[#1E2A4A]">{s.name}</div>
+                <div className="text-xs text-[#8A94A6]">{s.exam_type || "—"}</div>
+              </div>
+              <button onClick={() => toggleSubj(s.id, !(s.enabled !== false))} data-testid={`toggle-subject-${s.id}`}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold ${s.enabled !== false ? "bg-[#ECFDF5] text-[#10B981]" : "bg-[#FEE2E2] text-[#EF4444]"}`}>
+                {s.enabled !== false ? "Включён" : "Выключен"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {tab === "questions" && (
         <div>
           <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -126,18 +150,38 @@ export default function Admin() {
                   {topics.filter((t) => !form.subject_id || t.subject_id === form.subject_id).map((t) => <option key={t.topic_id} value={t.topic_id}>{t.name}</option>)}
                 </select>
                 <select value={form.difficulty} onChange={(e) => setForm((f) => ({ ...f, difficulty: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]">
-                  <option value="easy">easy</option><option value="medium">medium</option><option value="hard">hard</option><option value="ege">ege</option>
+                  <option value="easy">Базовая</option><option value="medium">Средняя</option><option value="hard">Сложная</option><option value="ege">ЕГЭ</option>
                 </select>
               </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]" data-testid="admin-q-type">
+                  <option value="single_choice">Один вариант</option>
+                  <option value="multiple_choice">Несколько вариантов</option>
+                  <option value="true_false">Верно/Неверно</option>
+                  <option value="numeric">Числовой ответ</option>
+                  <option value="text">Текстовый ответ</option>
+                </select>
+                {(form.type === "numeric" || form.type === "text") && (
+                  <input placeholder="Правильный ответ (значение)" value={form.answer_value} onChange={(e) => setForm((f) => ({ ...f, answer_value: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]" data-testid="admin-q-answer-value" />
+                )}
+              </div>
               <input placeholder="Текст вопроса" value={form.question} onChange={(e) => setForm((f) => ({ ...f, question: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]" data-testid="admin-q-text" />
-              <div className="text-xs text-[#8A94A6]">Отметь правильный вариант точкой слева:</div>
-              {form.options.map((o, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <input type="radio" checked={form.answer === i} onChange={() => setForm((f) => ({ ...f, answer: i }))} className="accent-[#7C66DC]" title="Правильный ответ" />
-                  <input placeholder={`Вариант ${i + 1}`} value={o} onChange={(e) => setForm((f) => { const opts = [...f.options]; opts[i] = e.target.value; return { ...f, options: opts }; })} className="flex-1 px-3 py-2 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]" data-testid={`admin-q-option-${i}`} />
-                </div>
-              ))}
+              {(form.type === "single_choice" || form.type === "multiple_choice" || form.type === "true_false") && (
+                <>
+                  <div className="text-xs text-[#8A94A6]">Отметь правильный вариант точкой слева:</div>
+                  {form.options.map((o, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input type="radio" checked={form.answer === i} onChange={() => setForm((f) => ({ ...f, answer: i }))} className="accent-[#7C66DC]" title="Правильный ответ" />
+                      <input placeholder={`Вариант ${i + 1}`} value={o} onChange={(e) => setForm((f) => { const opts = [...f.options]; opts[i] = e.target.value; return { ...f, options: opts }; })} className="flex-1 px-3 py-2 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]" data-testid={`admin-q-option-${i}`} />
+                    </div>
+                  ))}
+                </>
+              )}
               <input placeholder="Объяснение" value={form.explanation} onChange={(e) => setForm((f) => ({ ...f, explanation: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]" />
+              <div className="grid sm:grid-cols-2 gap-3">
+                <input placeholder="Подсказка (необязательно)" value={form.hint} onChange={(e) => setForm((f) => ({ ...f, hint: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]" data-testid="admin-q-hint" />
+                <input placeholder="Часть ЕГЭ (напр. Часть 1)" value={form.exam_part} onChange={(e) => setForm((f) => ({ ...f, exam_part: e.target.value }))} className="px-3 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]" data-testid="admin-q-exam-part" />
+              </div>
               <input placeholder="Категория ЕГЭ (необязательно)" value={form.ege_category} onChange={(e) => setForm((f) => ({ ...f, ege_category: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]" />
               <button onClick={create} data-testid="admin-q-save" className="btn-primary">Сохранить вопрос</button>
             </div>

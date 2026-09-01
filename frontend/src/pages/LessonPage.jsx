@@ -1,9 +1,81 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronRight, Check, X, CheckCircle2, Dumbbell, Sparkles } from "lucide-react";
+import { ChevronRight, Check, X, CheckCircle2, Dumbbell, Sparkles, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/api/client";
 import { Loader } from "@/components/common";
+
+function InteractiveTask({ lessonId, task, index, prior, subjectId, topicId }) {
+  const navigate = useNavigate();
+  const isChoice = task.type === "single_choice" || task.type === "true_false";
+  const [sel, setSel] = useState(prior ? prior.answer : (isChoice ? null : ""));
+  const [feedback, setFeedback] = useState(prior ? { is_correct: prior.is_correct } : null);
+  const [hint, setHint] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const check = async (answer) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const { data } = await api.lessonTaskAnswer(lessonId, { task_index: index, answer });
+      setFeedback(data);
+    } catch { toast.error("Ошибка проверки"); } finally { setBusy(false); }
+  };
+
+  const askFili = () => navigate(`/app/tutor?topic=${topicId}&lesson=${lessonId}&q=${encodeURIComponent("Помоги разобраться с заданием: " + task.prompt)}`);
+
+  return (
+    <div className="ls-card p-5" data-testid={`interactive-task-${index}`}>
+      <div className="font-medium text-[#1E2A4A] mb-3">{task.prompt}</div>
+      {isChoice ? (
+        <div className="space-y-2">
+          {task.options.map((o, i) => {
+            let cls = "border-[#E5DEC9] bg-[#FAF8F3] hover:border-[#C5BCFA]";
+            if (feedback) {
+              if (i === task.answer) cls = "border-[#10B981] bg-[#ECFDF5]";
+              else if (i === sel) cls = "border-[#EF4444] bg-[#FEE2E2]";
+            } else if (i === sel) cls = "border-[#7C66DC] bg-[#EEEAFB]";
+            return (
+              <button key={i} disabled={!!feedback} onClick={() => { setSel(i); check(i); }} data-testid={`task-${index}-option-${i}`}
+                className={`w-full text-left p-3 rounded-xl border-2 text-sm transition-all ${cls}`}>{o}</button>
+            );
+          })}
+        </div>
+      ) : (
+        !feedback ? (
+          <div className="flex gap-2">
+            <input value={sel} onChange={(e) => setSel(e.target.value)} data-testid={`task-${index}-input`}
+              placeholder={task.type === "numeric" ? "Введите число" : "Введите ответ"}
+              className="flex-1 px-4 py-2.5 rounded-xl border-2 border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]" />
+            <button onClick={() => sel && String(sel).trim() && check(sel)} data-testid={`task-${index}-check`} className="btn-accent">Проверить</button>
+          </div>
+        ) : (
+          <div className="text-sm text-[#4B5563]">Твой ответ: <span className="font-semibold">{String(sel)}</span></div>
+        )
+      )}
+
+      {!feedback && task.hint && (
+        <div className="mt-3">
+          <button onClick={() => setHint((h) => !h)} className="inline-flex items-center gap-1.5 text-sm text-[#F59E0B] hover:underline">
+            <Lightbulb className="w-4 h-4" /> Подсказка
+          </button>
+          {hint && <p className="text-sm text-[#4B5563] mt-2 p-3 rounded-xl bg-[#FEF3C7]">{task.hint}</p>}
+        </div>
+      )}
+
+      {feedback && (
+        <div className="mt-3">
+          <div className={`p-3 rounded-xl text-sm ${feedback.is_correct ? "bg-[#ECFDF5] text-[#10B981]" : "bg-[#FEF3C7] text-[#1E2A4A]"}`}>
+            {feedback.is_correct ? "✓ Верно!" : "✗ Не совсем."} {feedback.explanation || task.explanation}
+          </div>
+          <button onClick={askFili} data-testid={`task-${index}-ask-fili`} className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-[#7C66DC] hover:underline">
+            <Sparkles className="w-4 h-4" /> Фили, объясни
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function MiniQuestion({ q, index }) {
   const [sel, setSel] = useState(null);
@@ -65,7 +137,19 @@ export default function LessonPage() {
       </nav>
 
       <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#1E2A4A]">{lesson.title}</h1>
-      <div className="text-sm text-[#8A94A6] mt-1 mb-6">{lesson.duration} мин</div>
+      <div className="flex items-center gap-3 mt-1 mb-6">
+        <span className="text-sm text-[#8A94A6]">{lesson.duration} мин</span>
+        {(completed || lesson.status === "completed") && (
+          <span className="text-xs font-semibold text-[#10B981] bg-[#ECFDF5] px-2.5 py-1 rounded-full">Завершён · можно повторить</span>
+        )}
+        {lesson.status === "in_progress" && !completed && (
+          <span className="text-xs font-semibold text-[#F59E0B] bg-[#FEF3C7] px-2.5 py-1 rounded-full">В процессе</span>
+        )}
+        <button onClick={() => navigate(`/app/tutor?topic=${lesson.topic_id}&lesson=${id}&q=${encodeURIComponent("Объясни тему урока: " + lesson.title)}`)}
+          data-testid="lesson-ask-fili-btn" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#7C66DC] hover:underline ml-auto">
+          <Sparkles className="w-4 h-4" /> Фили, объясни
+        </button>
+      </div>
 
       {/* Explanation */}
       <section className="ls-card p-6 mb-5">
@@ -97,6 +181,22 @@ export default function LessonPage() {
                 <div className="text-[#1E2A4A]">{e.text}</div>
                 <div className="font-mono text-sm text-[#7C66DC] mt-1.5">→ {e.solution}</div>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Interactive tasks (graded + saved) */}
+      {lesson.interactive_tasks?.length > 0 && (
+        <section className="mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-display text-lg font-semibold text-[#1E2A4A]">Интерактивные задания</h2>
+            <span className="text-xs text-[#8A94A6]">Ответы сохраняются</span>
+          </div>
+          <div className="space-y-3">
+            {lesson.interactive_tasks.map((t, i) => (
+              <InteractiveTask key={i} lessonId={id} task={t} index={i}
+                prior={lesson.prior_answers?.[i]} subjectId={lesson.subject_id} topicId={lesson.topic_id} />
             ))}
           </div>
         </section>

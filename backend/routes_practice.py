@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Any
 
 from db import db, clean, clean_list
 from auth_utils import get_current_user, new_id, now_iso
 from logic import update_mastery, grant_achievement, check_task_achievements
+from grader import check_answer
 import content_data as C
 
 router = APIRouter()
@@ -14,18 +15,22 @@ class StartPracticeIn(BaseModel):
     subject_id: str
     topic_id: Optional[str] = None
     mode: Optional[str] = "adaptive"  # adaptive | mistakes
+    difficulty: Optional[str] = None   # easy | medium | hard | ege | None(all)
+    count: Optional[int] = 10
+    qtype: Optional[str] = None
 
 
 class PracticeAnswerIn(BaseModel):
     session_id: str
     question_id: str
-    answer: int
+    answer: Any
 
 
 def strip_answer(q: dict) -> dict:
-    return {"id": q["id"], "question": q["question"], "options": q["options"],
+    return {"id": q["id"], "question": q["question"], "options": q.get("options", []),
             "difficulty": q["difficulty"], "topic_id": q["topic_id"],
-            "ege_category": q.get("ege_category")}
+            "type": q.get("type", "single_choice"), "hint": q.get("hint", ""),
+            "exam_part": q.get("exam_part", ""), "ege_category": q.get("ege_category")}
 
 
 async def _recommended_difficulty(user_id: str, topic_id: str) -> str:
@@ -46,19 +51,29 @@ async def start_practice(body: StartPracticeIn, user: dict = Depends(get_current
             qids = [m["question_id"] for m in mistakes if m["topic_id"] == body.topic_id]
         questions = clean_list(await db.questions.find({"id": {"$in": qids}}).to_list(100))
     else:
-        questions = clean_list(await db.questions.find(query).to_list(200))
+        query = {"subject_id": body.subject_id}
+        if body.topic_id:
+            query["topic_id"] = body.topic_id
+        if body.difficulty:
+            query["difficulty"] = body.difficulty
+        if body.qtype:
+            query["type"] = body.qtype
+        questions = clean_list(await db.questions.find(query).to_list(300))
 
     if not questions:
-        raise HTTPException(status_code=400, detail="Нет заданий для практики")
+        raise HTTPException(status_code=400, detail="Нет заданий по заданным параметрам")
 
     # adaptive: prefer recommended difficulty for the topic
-    if body.topic_id and body.mode == "adaptive":
+    if body.topic_id and body.mode == "adaptive" and not body.difficulty:
         diff = await _recommended_difficulty(user["id"], body.topic_id)
         preferred = [q for q in questions if q["difficulty"] == diff]
         questions = (preferred + [q for q in questions if q not in preferred])
 
+    import random
+    random.shuffle(questions)
+    count = max(1, min(body.count or 10, 40))
     session_id = new_id()
-    qids = [q["id"] for q in questions][:10]
+    qids = [q["id"] for q in questions][:count]
     await db.practice_sessions.insert_one({
         "id": session_id, "user_id": user["id"], "subject_id": body.subject_id,
         "topic_id": body.topic_id, "mode": body.mode, "question_ids": qids,
@@ -77,7 +92,7 @@ async def practice_answer(body: PracticeAnswerIn, user: dict = Depends(get_curre
     q = clean(await db.questions.find_one({"id": body.question_id}))
     if not q:
         raise HTTPException(status_code=404, detail="Вопрос не найден")
-    is_correct = body.answer == q["answer"]
+    is_correct = check_answer(q, body.answer)
 
     # record attempt
     await db.question_attempts.insert_one({
@@ -87,8 +102,9 @@ async def practice_answer(body: PracticeAnswerIn, user: dict = Depends(get_curre
         "difficulty": q["difficulty"], "created_at": now_iso(),
     })
 
-    # update mastery + adaptive difficulty
-    mastery, difficulty = await update_mastery(user["id"], q["subject_id"], q["topic_id"], is_correct)
+    # update mastery + adaptive difficulty (difficulty-weighted)
+    mastery, difficulty = await update_mastery(
+        user["id"], q["subject_id"], q["topic_id"], is_correct, q["difficulty"])
 
     # mistakes handling
     if not is_correct:
@@ -102,7 +118,8 @@ async def practice_answer(body: PracticeAnswerIn, user: dict = Depends(get_curre
                     "topic_name": C.topic_index().get(q["topic_id"], {}).get("name", q["topic_id"]),
                     "subject_name": C.topic_index().get(q["topic_id"], {}).get("subject_name", q["subject_id"]),
                     "question": q["question"], "options": q["options"],
-                    "student_answer": body.answer, "correct_answer": q["answer"],
+                    "student_answer": body.answer, "correct_answer": q.get("answer"),
+                    "correct_value": q.get("answer_value"), "type": q.get("type", "single_choice"),
                     "explanation": q["explanation"], "difficulty": q["difficulty"],
                     "resolved": False,
                 },
@@ -124,9 +141,10 @@ async def practice_answer(body: PracticeAnswerIn, user: dict = Depends(get_curre
     await check_task_achievements(user["id"])
 
     return {
-        "is_correct": is_correct, "correct_answer": q["answer"],
-        "explanation": q["explanation"], "mastery": mastery,
-        "difficulty": difficulty,
+        "is_correct": is_correct, "correct_answer": q.get("answer"),
+        "correct_value": q.get("answer_value"), "type": q.get("type", "single_choice"),
+        "explanation": q["explanation"], "hint": q.get("hint", ""),
+        "mastery": mastery, "difficulty": difficulty,
     }
 
 

@@ -52,12 +52,18 @@ class TestAuth:
             "email": student["email"], "password": "wrongpass"})
         assert bad.status_code == 401
 
-    def test_brute_force_lockout(self, student):
-        """Playbook: account should lock after 5 failed attempts."""
+    def test_brute_force_lockout(self):
+        """Playbook: account should lock after 5 failed attempts (uses a throwaway account
+        so the shared student fixture is not locked out for later tests)."""
+        import uuid as _uuid
+        email = f"TEST_lock_{_uuid.uuid4().hex[:10]}@ls.ru"
+        reg = requests.post(f"{API}/auth/register", json={"name": "TEST Lock",
+                                                         "email": email, "password": "test123"})
+        assert reg.status_code == 200, reg.text[:300]
         codes = []
         for _ in range(6):
             r = requests.post(f"{API}/auth/login", json={
-                "email": student["email"], "password": "definitelywrong"})
+                "email": email, "password": "definitelywrong"})
             codes.append(r.status_code)
         assert 423 in codes or 429 in codes, f"No lockout after 6 failures, codes={codes}"
 
@@ -124,15 +130,23 @@ class TestDiagnostic:
         d = r.json()
         diag_id = d["diagnostic_id"]
         qs = d["questions"]
-        assert 1 <= len(qs) <= 10
+        assert 1 <= len(qs) <= 12
         for q in qs:
             assert "answer" not in q and "explanation" not in q, "correct answer leaked"
-            assert len(q["options"]) >= 2
+            if q.get("type", "single_choice") in ("single_choice", "multiple_choice", "true_false"):
+                assert len(q["options"]) >= 2
 
         # answer all: first half index 0, rest deliberately varied
         for i, q in enumerate(qs):
+            qtype = q.get("type", "single_choice")
+            if qtype in ("single_choice", "true_false"):
+                payload_ans = i % len(q["options"])
+            elif qtype == "multiple_choice":
+                payload_ans = [i % len(q["options"])]
+            else:
+                payload_ans = "0"
             ans = s.post(f"{API}/diagnostics/{diag_id}/answer",
-                         json={"question_id": q["id"], "answer": i % len(q["options"])})
+                         json={"question_id": q["id"], "answer": payload_ans})
             assert ans.status_code == 200, ans.text[:300]
             body = ans.json()
             assert isinstance(body["is_correct"], bool)
@@ -214,7 +228,9 @@ class TestPracticeAndMistakes:
         sid, qs = d["session_id"], d["questions"]
         assert qs and all("answer" not in q for q in qs)
 
-        q = qs[0]
+        choice_qs = [x for x in qs if x.get("type", "single_choice") == "single_choice" and x.get("options")]
+        assert choice_qs, "no single_choice question returned by practice/start"
+        q = choice_qs[0]
         # find correct answer by trying: first submit an intentionally wrong-ish answer
         a1 = s.post(f"{API}/practice/answer", json={"session_id": sid,
                                                     "question_id": q["id"], "answer": 0})
@@ -382,7 +398,7 @@ class TestMockExams:
         d = st.json()
         assert d["duration_min"] > 0
         qs = d["questions"]
-        assert len(qs) == 12, f"expected 12 questions, got {len(qs)}"
+        assert len(qs) == 15, f"expected 15 questions, got {len(qs)}"
         assert all("answer" not in q for q in qs)
 
         answers = {q["id"]: 0 for q in qs}
@@ -390,7 +406,7 @@ class TestMockExams:
                      json={"answers": answers, "time_spent": 600})
         assert fin.status_code == 200, fin.text[:300]
         f = fin.json()
-        assert 0 <= f["accuracy"] <= 100 and f["total"] == 12
+        assert 0 <= f["accuracy"] <= 100 and f["total"] == 15
         assert f["time_spent"] == 600
         assert isinstance(f["topic_breakdown"], list) and f["topic_breakdown"]
         assert isinstance(f["review"], list)
@@ -440,7 +456,7 @@ class TestAdmin:
         stats = s.get(f"{API}/admin/stats")
         assert stats.status_code == 200, stats.text[:300]
         sd = stats.json()
-        assert sd["subjects"] == 6 and sd["questions"] > 0
+        assert sd["subjects"] == 12 and sd["questions"] > 0
 
         users = s.get(f"{API}/admin/users")
         assert users.status_code == 200

@@ -5,12 +5,13 @@ from typing import Optional
 from db import db, clean, clean_list
 from auth_utils import get_current_user, new_id, now_iso
 from logic import update_mastery, grant_achievement
+from grader import check_answer
 import content_data as C
 
 router = APIRouter()
 
-MOCK_SIZE = 12
-MOCK_DURATION_MIN = 30
+MOCK_SIZE = 15
+MOCK_DURATION_MIN = 40
 
 
 class StartMockIn(BaseModel):
@@ -18,14 +19,15 @@ class StartMockIn(BaseModel):
 
 
 class MockSubmitIn(BaseModel):
-    answers: dict  # {question_id: answer_index}
+    answers: dict  # {question_id: answer}
     time_spent: Optional[int] = 0
 
 
 def strip_answer(q: dict) -> dict:
-    return {"id": q["id"], "question": q["question"], "options": q["options"],
+    return {"id": q["id"], "question": q["question"], "options": q.get("options", []),
             "difficulty": q["difficulty"], "topic_id": q["topic_id"],
-            "ege_category": q.get("ege_category")}
+            "type": q.get("type", "single_choice"), "hint": q.get("hint", ""),
+            "exam_part": q.get("exam_part", ""), "ege_category": q.get("ege_category")}
 
 
 @router.get("/mock-exams")
@@ -48,9 +50,14 @@ async def start_mock(body: StartMockIn, user: dict = Depends(get_current_user)):
     subject = clean(await db.subjects.find_one({"id": body.subject_id}))
     if not subject:
         raise HTTPException(status_code=404, detail="Предмет не найден")
-    questions = clean_list(await db.questions.find({"subject_id": body.subject_id}).to_list(200))
+    questions = clean_list(await db.questions.find({"subject_id": body.subject_id}).to_list(300))
     if not questions:
         raise HTTPException(status_code=400, detail="Нет вопросов для пробника")
+    # exam-like selection: bias toward hard/ege, keep some medium
+    _rank = {"ege": 0, "hard": 1, "medium": 2, "easy": 3}
+    import random
+    random.shuffle(questions)
+    questions.sort(key=lambda q: _rank.get(q["difficulty"], 2))
     selected = questions[:MOCK_SIZE]
     attempt_id = new_id()
     await db.mock_exam_attempts.insert_one({
@@ -80,14 +87,14 @@ async def finish_mock(attempt_id: str, body: MockSubmitIn, user: dict = Depends(
     review = []
     for q in questions:
         ans = body.answers.get(q["id"])
-        is_correct = ans == q["answer"]
+        is_correct = ans is not None and check_answer(q, ans)
         if is_correct:
             correct += 1
         st = per_topic.setdefault(q["topic_id"], {"correct": 0, "total": 0})
         st["total"] += 1
         st["correct"] += 1 if is_correct else 0
-        # feed back into knowledge profile
-        await update_mastery(user["id"], q["subject_id"], q["topic_id"], is_correct)
+        # feed back into knowledge profile (difficulty-weighted)
+        await update_mastery(user["id"], q["subject_id"], q["topic_id"], is_correct, q["difficulty"])
         await db.question_attempts.insert_one({
             "id": new_id(), "user_id": user["id"], "question_id": q["id"],
             "subject_id": q["subject_id"], "topic_id": q["topic_id"],
@@ -96,8 +103,9 @@ async def finish_mock(attempt_id: str, body: MockSubmitIn, user: dict = Depends(
         })
         if not is_correct:
             review.append({
-                "question": q["question"], "options": q["options"],
-                "student_answer": ans, "correct_answer": q["answer"],
+                "question": q["question"], "options": q.get("options", []),
+                "student_answer": ans, "correct_answer": q.get("answer"),
+                "correct_value": q.get("answer_value"), "type": q.get("type", "single_choice"),
                 "explanation": q["explanation"],
                 "topic_name": idx.get(q["topic_id"], {}).get("name", q["topic_id"]),
             })

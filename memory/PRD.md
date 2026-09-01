@@ -62,3 +62,14 @@ profile & difficulty update → next task. Real data only (zeros/empty states fo
 ## Known notes
 - Seed content is demo/educational, not official EGE questions (labeled in UI/README).
 - `days_until_exam` clamps to 0 for past dates.
+
+## Enhancement round 2 (2026-06)
+- **12 EGE subjects** (added Математика база, Химия, История, География, Английский, Литература); admin can enable/disable each.
+- **Harder EGE-level question bank** with multi-step tasks, typical traps, `hint`, `exam_part`, `tags`.
+- **Multiple answer types**: single_choice, multiple_choice, true_false, numeric, text — graded server-side (`grader.py`, tolerant to `0,24`≈`0.24`, case/space/order).
+- **Recalibrated mastery** (`compute_mastery`): difficulty-weighted, volume-scaled, ceiling by hardest level attempted — no more instant 100%; lessons contribute via graded tasks, not completion alone.
+- **Interactive lessons**: answer fields + «Проверить», persisted answers/status, re-openable after completion, per-task «Фили, объясни» with lesson/problem context.
+- **Practice selectors**: subject/topic/difficulty/count. **Mock exams** harder (15 q / 40 min, hard/ege bias) with all answer types.
+- **Contextual, hint-first Фили** (no LaTeX leakage; client-side LaTeX cleanup fallback).
+- Admin: subject enable/disable + question type/hint/exam_part/answer_value editing.
+- Verified: backend 58/58 pytest; frontend flows pass. Fixed post-test bugs: lesson completion status, contextual-Фили double-send (StrictMode), ill-posed parametric question, hint-first behavior + LaTeX rendering.

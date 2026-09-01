@@ -51,6 +51,7 @@ export const api = {
   topic: (id) => client.get(`/topics/${id}`),
   lesson: (id) => client.get(`/lessons/${id}`),
   completeLesson: (id) => client.post(`/lessons/${id}/complete`),
+  lessonTaskAnswer: (id, d) => client.post(`/lessons/${id}/task-answer`, d),
   textbooks: () => client.get("/textbooks"),
   // diagnostics
   startDiagnostic: (subject_id) => client.post("/diagnostics/start", { subject_id }),
@@ -93,6 +94,8 @@ export const api = {
   adminUsers: () => client.get("/admin/users"),
   adminQuestions: (subject_id) => client.get("/admin/questions", { params: { subject_id } }),
   adminTopics: () => client.get("/admin/topics"),
+  adminSubjectsAll: () => client.get("/admin/subjects"),
+  toggleSubject: (id, enabled) => client.patch(`/admin/subjects/${id}`, { enabled }),
   createQuestion: (d) => client.post("/admin/questions", d),
   updateQuestion: (id, d) => client.patch(`/admin/questions/${id}`, d),
   deleteQuestion: (id) => client.delete(`/admin/questions/${id}`),

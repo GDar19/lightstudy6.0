@@ -8,9 +8,24 @@ function TypingDots() {
   );
 }
 
+function cleanLatex(text) {
+  if (!text) return "";
+  return text
+    .replace(/\\\[|\\\]|\\\(|\\\)/g, "")
+    .replace(/\\cdot/g, "·")
+    .replace(/\\times/g, "×")
+    .replace(/\\leq/g, "≤").replace(/\\geq/g, "≥").replace(/\\approx/g, "≈")
+    .replace(/\\sqrt\s*\{([^}]*)\}/g, "√($1)")
+    .replace(/\\frac\s*\{([^}]*)\}\s*\{([^}]*)\}/g, "($1)/($2)")
+    .replace(/\\left|\\right/g, "")
+    .replace(/\\,|\\;|\\!/g, " ")
+    .replace(/\\[a-zA-Z]+/g, "");
+}
+
 // Lightweight markdown -> HTML for AI answers (bold, headings, lists, code, hr, line breaks).
 function renderMarkdown(text) {
   if (!text) return "";
+  text = cleanLatex(text);
   const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const lines = text.split("\n");
   let html = "";

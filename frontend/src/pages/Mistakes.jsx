@@ -69,10 +69,10 @@ export default function Mistakes() {
                   <div className="font-medium text-[#1E2A4A]">{m.question}</div>
                   <div className="mt-3 space-y-1.5 text-sm">
                     <div className="flex items-center gap-2 text-[#EF4444]">
-                      <X className="w-4 h-4" /> Твой ответ: {m.options[m.student_answer] ?? "—"}
+                      <X className="w-4 h-4" /> Твой ответ: {(m.type === "numeric" || m.type === "text") ? (m.student_answer ?? "—") : (m.options[m.student_answer] ?? "—")}
                     </div>
                     <div className="flex items-center gap-2 text-[#10B981]">
-                      <Check className="w-4 h-4" /> Правильно: {m.options[m.correct_answer]}
+                      <Check className="w-4 h-4" /> Правильно: {(m.type === "numeric" || m.type === "text") ? (Array.isArray(m.correct_value) ? m.correct_value.join(" / ") : m.correct_value) : m.options[m.correct_answer]}
                     </div>
                   </div>
                   {m.explanation && <p className="text-sm text-[#4B5563] mt-3 p-3 rounded-xl bg-[#FAF8F3]">{m.explanation}</p>}

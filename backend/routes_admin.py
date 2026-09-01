@@ -13,11 +13,33 @@ class QuestionIn(BaseModel):
     subject_id: str
     topic_id: str
     difficulty: str = "medium"
+    type: str = "single_choice"
     question: str
-    options: List[str]
-    answer: int
+    options: List[str] = []
+    answer: Optional[object] = None
+    answer_value: Optional[object] = None
     explanation: str = ""
+    hint: str = ""
+    exam_part: Optional[str] = ""
+    tags: List[str] = []
     ege_category: Optional[str] = ""
+
+
+class SubjectToggleIn(BaseModel):
+    enabled: bool
+
+
+@router.get("/admin/subjects")
+async def admin_subjects(admin: dict = Depends(require_admin)):
+    return clean_list(await db.subjects.find({}).to_list(100))
+
+
+@router.patch("/admin/subjects/{sid}")
+async def toggle_subject(sid: str, body: SubjectToggleIn, admin: dict = Depends(require_admin)):
+    res = await db.subjects.update_one({"id": sid}, {"$set": {"enabled": body.enabled}})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Предмет не найден")
+    return clean(await db.subjects.find_one({"id": sid}))
 
 
 @router.get("/admin/stats")
@@ -48,9 +70,10 @@ async def admin_questions(subject_id: Optional[str] = None, admin: dict = Depend
 
 @router.post("/admin/questions")
 async def create_question(body: QuestionIn, admin: dict = Depends(require_admin)):
+    from grader import DIFFICULTY_LEVEL
     doc = body.model_dump()
     doc["id"] = new_id()
-    doc["type"] = "single_choice"
+    doc["difficulty_level"] = DIFFICULTY_LEVEL.get(doc.get("difficulty", "medium"), 3)
     doc["source"] = "admin"
     doc["created_at"] = now_iso()
     await db.questions.insert_one(dict(doc))
