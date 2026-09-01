@@ -1,0 +1,57 @@
+{
+  "summary": "Full backend + frontend E2E testing of LightStudy. Backend: created pytest suite (37 tests) covering auth/cookies/JWT, onboarding, subjects, diagnostic full flow, study plan, practice+adaptive difficulty+mistakes lifecycle, real Claude AI tutor (chat/explain/persistence), dashboard & statistics aggregates, mock exams (12q), profile persistence, achievements, admin CRUD + RBAC 403, cross-user isolation -> 36/37 passed (only missing brute-force lockout). Frontend: drove complete UI journeys with Playwright: register -> onboarding -> 10-question diagnostic -> results -> create plan -> dashboard -> practice (adaptive badges, feedback) -> mistakes retry -> AI tutor (real non-fallback Claude answers, quick actions, conversation persistence) -> statistics -> profile persistence -> mock exam 12q + results -> admin panel (stats/users/questions create) -> student RBAC guard -> logout. No console errors, no dead buttons found. Main defects: mobile horizontal overflow on Dashboard and Tutor, diagnostic answers not counted into attempt stats, no login lockout, wildcard CORS with credentials.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/auth/login", "issue": "No brute-force protection: 6+ consecutive wrong passwords all return 401, no 423/429 lockout and no failed-attempt counter (playbook requires lockout after 5 fails)"},
+      {"endpoint": "POST /api/diagnostics/{id}/answer", "issue": "Diagnostic answers are never written to question_attempts, so after completing a 10-question diagnostic dashboard shows 'Заданий решено 0', accuracy 0% and Statistics 'Прогресс во времени' is empty — inconsistent with 'all real data' requirement"},
+      {"endpoint": "server.py CORS", "issue": "CORS_ORIGINS=\"*\" combined with allow_credentials=True; should be explicit origin list for cookie auth (playbook requirement)"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Tutor page (chat card)", "issue": "At 390px viewport the chat card is 631px wide -> 257px horizontal overflow; chat header, messages and the message input are cut off / require horizontal scroll", "selector": "div.ls-card.flex.flex-col.h-[70vh], [data-testid=\"chat-messages\"]", "priority": "HIGH"},
+      {"component": "Dashboard 'Сегодня' card", "issue": "At 390px viewport the today-tasks card is 566px wide -> 192px horizontal overflow; 'Начать' buttons and 'Весь план' link sit off-screen", "selector": "[data-testid=\"today-tasks\"], div.lg\\:col-span-2", "priority": "HIGH"},
+      {"component": "Admin questions list", "issue": "Question cards and their delete buttons have no data-testid, so admin delete cannot be targeted reliably", "selector": "none", "priority": "LOW"},
+      {"component": "Statistics page", "issue": "Page has zero data-testid attributes (stat cards, charts, weak-topic rows) — not testable; Dashboard uses data-testid=\"stat-card\" but Statistics does not", "selector": "none", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Statistics (bar chart tooltip)", "issues": ["Recharts tooltip renders the raw English dataKey: 'mastery : 23' — UI must be fully Russian; add Tooltip formatter/name"]},
+      {"screen": "Admin -> Вопросы -> Добавить вопрос", "issues": ["subject_id and topic_id are free-text inputs requiring knowledge of internal IDs (placeholders 'subject_id (напр. math_prof)'); should be selects populated from /api/subjects and /api/admin/topics", "No labels for the radio group choosing the correct option, no ЕГЭ-category field"]},
+      {"screen": "Mobile (390px) Dashboard/Tutor", "issues": ["Horizontal page scroll caused by grid children missing min-w-0 (grid items default min-width:auto); chips row with overflow-x-auto expands the track"]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/conftest.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Fix mobile layout overflow: add min-w-0 (and w-full) to grid children on Dashboard (div.lg:col-span-2, ls-card) and Tutor (grid lg:grid-cols-[260px,1fr] child + chat card), ensure the quick-action chips row (overflow-x-auto) has min-w-0 so it does not widen the track",
+    "Record diagnostic answers into question_attempts (or otherwise include them in dashboard tasks_completed/accuracy and statistics progress_over_time) so stats reflect diagnostic activity",
+    "Implement failed-login lockout (e.g. 5 attempts -> 423/429 with cooldown) per auth playbook",
+    "Set CORS_ORIGINS to explicit origins instead of '*' since cookies/credentials are used",
+    "Localize Recharts tooltip on Statistics ('mastery' -> 'Уровень, %')",
+    "Replace admin question-form subject_id/topic_id free-text inputs with selects from /api/subjects + /api/admin/topics; add data-testid to admin question cards and delete buttons",
+    "Add data-testid attributes to Statistics page cards/rows"
+  ],
+  "critical_code_review_comments": [
+    "routes_diagnostic.answer_diagnostic writes only into diagnostics.answers; every other answer path (practice, mock) writes question_attempts — inconsistency causes zeroed dashboard stats after a diagnostic",
+    "routes_practice.practice_answer 'correct answer' branch calls db.mistakes.update_one without upsert (correct) but the wrong-answer branch resets 'id' on every upsert $set — the mistake document id changes on each repeat, which can break client-side keys/deduplication",
+    "auth_utils cookies use secure=True + samesite='none' (correct for the preview proxy), but there is no refresh endpoint: once the 1-day access token expires the refresh_token cookie is unusable and the user is silently logged out",
+    "No rate limiting on /api/ai/* endpoints — each call hits the paid LLM provider with unbounded frequency"
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/conftest.py",
+    "/app/test_reports/iteration_1.json"
+  ],
+  "success_rate": {"backend": "97% (36/37 pytest)", "frontend": "90% (all flows work; 2 mobile layout defects + minor testability/localization gaps)"},
+  "seed_data_creation": "Registered throwaway students: qa_ui_1788280636@ls.ru / test123 (onboarded math_prof, completed diagnostic, practice, mock exam, AI chats) plus TEST_qa_* / TEST_zero_* accounts created by pytest. Admin-created question 'TEST_UI вопрос 2+2?' was deleted after the test (question count back to 72).",
+  "should_call_test_agent_after_fix": true,
+  "should_main_agent_self_test": false,
+  "test_credentials": "Admin admin@lightstudy.ru / admin123 (bcrypt hash verified $2b$12$, seed_admin re-hashes when password changes). Student qa_ui_1788280636@ls.ru / test123 (name persisted as 'QA Изменён', target 95).",
+  "context_for_next_testing_agent": "Regression suite lives at /app/backend/tests/ (conftest.py + backend_test.py); pytest.ini runs -n 2 --dist loadscope, so keep per-class sequential state. Verified working end-to-end: auth cookies+Bearer, onboarding, 6 subjects with mastery, diagnostic (10q, answers stripped), study plan generate/patch, practice adaptive (difficulty badge changes Лёгкий->Средний->Сложный), mistakes create/resolve/retry, real Claude answers (no fallback) on /api/ai/chat, /api/ai/explain and topic-ai-explain-btn, dashboard/statistics real aggregates, mock exam 12q one-question-at-a-time UI with mock-submit-btn only on the last question, profile persistence after re-login, admin CRUD + student 403 + 'Доступ запрещён' guard on /app/admin, cross-user 404 isolation. Re-verify after fixes: mobile overflow on /app and /app/tutor (measure document.documentElement.scrollWidth - window.innerWidth at 390px, expected 0), dashboard tasks_completed after a diagnostic-only account, and login lockout.",
+  "rca_of_the_issue": "Mobile overflow: grid items have min-width:auto by default, so the long task rows on Dashboard and the horizontally scrollable quick-action chip row inside the Tutor chat card force their grid track wider than the 390px viewport; the AppLayout main has min-w-0 but the page-level grid children do not. Stats gap: /api/diagnostics/{id}/answer stores answers only inside the diagnostics document and never inserts into question_attempts, while dashboard/statistics compute tasks_completed, accuracy and progress_over_time exclusively from question_attempts."
+}

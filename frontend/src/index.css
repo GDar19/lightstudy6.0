@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ls-bg: #F8F5EE;
+  --ls-bg-2: #FAF8F3;
+  --ls-card: #FFFFFF;
+  --ls-sidebar: #182238;
+  --ls-navy: #1E2A4A;
+  --ls-navy-2: #2B3A60;
+  --ls-purple: #7C66DC;
+  --ls-purple-2: #6853C8;
+  --ls-lavender: #9B8DF3;
+  --ls-periwinkle: #C5BCFA;
+  --ls-cream-accent: #F0EBE1;
+  --ls-border: #E5DEC9;
+  --ls-text: #1E2A4A;
+  --ls-text-2: #4B5563;
+  --ls-muted: #8A94A6;
+
+  --background: 42 40% 95%;
+  --foreground: 222 42% 20%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 42% 20%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 42% 20%;
+  --primary: 222 42% 20%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 33% 91%;
+  --secondary-foreground: 222 42% 20%;
+  --muted: 40 33% 91%;
+  --muted-foreground: 218 12% 60%;
+  --accent: 251 62% 63%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 45 42% 84%;
+  --input: 45 42% 84%;
+  --ring: 251 62% 63%;
+  --radius: 0.9rem;
+}
+
+* { border-color: hsl(var(--border)); }
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--ls-bg);
+  color: var(--ls-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.font-mono, code, .katex-like {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+::selection { background: var(--ls-periwinkle); color: var(--ls-navy); }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d8cfbc; border-radius: 999px; border: 3px solid var(--ls-bg); }
+::-webkit-scrollbar-thumb:hover { background: #c9bfa8; }
+
+.ls-card {
+  background: var(--ls-card);
+  border: 1px solid rgba(30,42,74,0.06);
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 24px rgba(30,42,74,0.05);
+}
+
+.ls-gradient-hero {
+  background:
+    radial-gradient(1200px 500px at 80% -10%, rgba(155,141,243,0.18), transparent 60%),
+    radial-gradient(800px 400px at 10% 10%, rgba(197,188,250,0.15), transparent 60%);
+}
+
+.btn-primary {
+  background: var(--ls-navy); color: #fff; border-radius: 0.9rem;
+  padding: 0.7rem 1.4rem; font-weight: 600; transition: transform .12s ease, background-color .2s ease;
+}
+.btn-primary:hover { background: var(--ls-navy-2); }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-accent {
+  background: var(--ls-purple); color: #fff; border-radius: 0.9rem;
+  padding: 0.7rem 1.4rem; font-weight: 600; transition: transform .12s ease, background-color .2s ease;
+}
+.btn-accent:hover { background: var(--ls-purple-2); }
+.btn-accent:active { transform: scale(0.98); }
+
+@keyframes ls-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: ls-fade-up .5s cubic-bezier(.2,.7,.2,1) both; }
+
+@keyframes ls-float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float { animation: ls-float 4s ease-in-out infinite; }
+
+.typing-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--ls-lavender);
+  display: inline-block; animation: ls-blink 1.2s infinite both;
+}
+.typing-dot:nth-child(2) { animation-delay: .2s; }
+.typing-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes ls-blink { 0%,80%,100%{opacity:.3} 40%{opacity:1} }
+
+.prose-ai { line-height: 1.7; }
+.prose-ai h1,.prose-ai h2,.prose-ai h3 { font-weight:700; margin:.6em 0 .3em; }
+.prose-ai ul { list-style: disc; padding-left: 1.2rem; margin:.4em 0; }
+.prose-ai ol { list-style: decimal; padding-left: 1.2rem; margin:.4em 0; }
+.prose-ai code { background:#F0EBE1; padding:.1em .35em; border-radius:.35em; font-size:.9em; }
+.prose-ai hr { border:0; border-top:1px solid var(--ls-border); margin:.8em 0; }
+.prose-ai strong { color: var(--ls-navy); }

@@ -1,0 +1,105 @@
+{
+  "project_name": "LightStudy",
+  "project_title": "LightStudy — Умная подготовка к ЕГЭ",
+  "archetype": "ORGANIC & ACADEMIC MODERN",
+  "theme": "light",
+  "language": "ru",
+  "color_palette": {
+    "background": {
+      "main": "#F8F5EE",
+      "secondary": "#FAF8F3",
+      "card": "#FFFFFF",
+      "card_accent": "#F0EBE1",
+      "sidebar": "#182238"
+    },
+    "text": {
+      "primary": "#1E2A4A",
+      "secondary": "#4B5563",
+      "muted": "#8A94A6",
+      "light": "#F8F5EE",
+      "accent_purple": "#6C5CE7"
+    },
+    "brand": {
+      "primary_navy": "#1E2A4A",
+      "accent_purple": "#7C66DC",
+      "accent_lavender": "#9B8DF3",
+      "accent_periwinkle": "#C5BCFA",
+      "accent_soft_cream": "#F4EFE6"
+    },
+    "status": {
+      "success": "#10B981",
+      "success_light": "#ECFDF5",
+      "warning": "#F59E0B",
+      "warning_light": "#FEF3C7",
+      "error": "#EF4444",
+      "error_light": "#FEE2E2",
+      "info": "#3B82F6",
+      "info_light": "#EFF6FF"
+    },
+    "borders": {
+      "subtle": "#E5DEC9",
+      "card_border": "rgba(30, 42, 74, 0.08)",
+      "accent_border": "rgba(124, 102, 220, 0.25)"
+    }
+  },
+  "typography": {
+    "headings_font": "Plus Jakarta Sans, Shift, system-ui, sans-serif",
+    "body_font": "Inter, system-ui, sans-serif",
+    "mono_font": "JetBrains Mono, monospace",
+    "hierarchy": {
+      "hero_h1": "text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1E2A4A] leading-[1.15]",
+      "section_h2": "text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1E2A4A]",
+      "card_h3": "text-xl sm:text-2xl font-semibold text-[#1E2A4A]",
+      "sub_h4": "text-lg font-medium text-[#1E2A4A]",
+      "body": "text-base text-[#4B5563] leading-relaxed",
+      "caption": "text-xs font-medium uppercase tracking-wider text-[#8A94A6]"
+    }
+  },
+  "mascot_brand_identity": {
+    "name": "Мудрый Фили (Wizard AI Mascot)",
+    "description": "Cute wizard owl with a periwinkle magic hat and round spectacles. Central AI Tutor avatar across landing, onboarding, practice engine, diagnostic results, and AI chat.",
+    "visual_elements": [
+      "Custom SVG wizard avatar with magical sparkle aura",
+      "Botanical leaf and star constellation line-art accents in card backgrounds",
+      "Interactive wizard action prompts: 'Фили объяснит', 'Проверить решение', 'Дать подсказку'"
+    ]
+  },
+  "component_guidelines": {
+    "navigation": "Desktop left sidebar (#182238 dark navy) with active pill indicators, user avatar, countdown timer badge; Mobile top navbar with smooth sheet drawer.",
+    "cards": "Soft rounded cards (rounded-2xl or rounded-3xl) in crisp white (#FFFFFF) or warm tint (#FAF8F3), 1px subtle border (#E5DEC9), soft diffuse box-shadow (shadow-[0_4px_20px_rgba(30,42,74,0.05)]).",
+    "buttons": {
+      "primary": "bg-[#1E2A4A] text-white hover:bg-[#2B3A60] active:scale-[0.98] rounded-xl px-6 py-3 font-semibold shadow-md transition-all",
+      "accent": "bg-[#7C66DC] text-white hover:bg-[#6853C8] active:scale-[0.98] rounded-xl px-6 py-3 font-semibold shadow-md transition-all",
+      "secondary": "bg-[#F0EBE1] text-[#1E2A4A] hover:bg-[#E2DACB] rounded-xl px-5 py-2.5 font-medium transition-all",
+      "outline": "border border-[#1E2A4A]/20 text-[#1E2A4A] hover:bg-[#1E2A4A]/5 rounded-xl px-5 py-2.5 font-medium transition-all"
+    },
+    "charts": "Circular SVG donut progress rings for subject mastery, Recharts for 14-day study frequency & score progression."
+  },
+  "key_features_layout": [
+    "Landing Hero with Wizard Mascot & quick CTA to Diagnostic Test",
+    "Auth Modal / Flow (Login & Register in Russian)",
+    "Onboarding 3-step Wizard (Subject selection: Математика профиль, Русский язык, Обществознание, Физика, Информатика, История, Биология; Target score 0-100; Exam date picker)",
+    "Diagnostic Test interactive mode with instant AI wizard explanations",
+    "Knowledge Mastery Profile with Donut charts per topic",
+    "Dashboard with countdown widget ('До ЕГЭ осталось 124 дня'), daily study goals, weak topic alerts",
+    "Personalized Study Plan (Daily timeline & Weekly calendar toggle)",
+    "Hierarchical Topics & Interactive Lessons with math/formula renderer and practice tasks",
+    "Adaptive Practice Engine with instant feedback and difficulty auto-scaling",
+    "Mistake Analysis page ('Работа над ошибками') with filterable review cards",
+    "Mock Exams ('Пробные ЕГЭ') with timer, strict scoring, and detailed analysis",
+    "AI Tutor Chat ('Чат с Фили') with quick prompt buttons, step-by-step solver, hint generator",
+    "Textbook Mode ('Мои учебники') with downloadable formula cheatsheets and summaries",
+    "Achievements & Streak System ('Дни подряд', 'Мастер Алгебры')",
+    "Admin Panel for managing topics, practice questions, and student metrics"
+  ],
+  "testing_and_accessibility": {
+    "data_testid_rules": "All interactive elements, inputs, buttons, test cards, tabs, and status badges MUST include data-testid (e.g. data-testid='start-diagnostic-btn', data-testid='subject-card-math', data-testid='ai-chat-send-btn').",
+    "russian_locale": "All labels, error messages, placeholders, tooltips, and buttons MUST be in Russian."
+  },
+  "instructions_to_main_agent": [
+    "Build a production-grade React + Tailwind app using the existing setup.",
+    "Ensure all views (Landing, Auth, Onboarding, Dashboard, Diagnostic, Subjects, Lesson, Practice, Mistakes, Stats, Mocks, AI Chat, Textbooks, Admin) are fully accessible and interactive.",
+    "Maintain high aesthetic standards: soft warm background (#F8F5EE), dark navy sidebar (#182238), rounded-2xl cards, purple/lavender accent buttons (#7C66DC), wizard character mascot graphics.",
+    "Implement real mock data and full local state / backend API integration so the user can test all features seamlessly."
+  ]
+}

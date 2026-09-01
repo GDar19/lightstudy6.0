@@ -1,0 +1,31 @@
+{
+  "summary": "Targeted re-test of iteration_1 fixes (frontend only, public preview URL). VERIFIED FIXED: (1) Dashboard /app at 390px -> scrollWidth-innerWidth = 0, 'Начать' buttons (x=218,w=114) and 'Весь план' link fully inside viewport; (2) AI Tutor /app/tutor at 390px -> overflow = 0 before and after an AI answer; chat-input (right=288), chat-send-btn (right=361) and chat-messages (right=373) all inside 390px; quick-action chips scroll inside their own overflow-x-auto track without widening the page; (3) diagnostic-only stats: seeded brand-new account (register->onboarding->10-question diagnostic->finish, no practice) and logged in via UI — Dashboard stat cards show 'Заданий решено 10', 'Средний результат 30%', 'Общий прогресс 30%'; Statistics page renders 4 stat cards, subject bar chart (1 bar) and 5 weak topics with real values. Sanity: login OK, dashboard loads, AI tutor returned a real Claude answer (277 chars, Russian, personalized to weak topic — not a fallback), Statistics bar tooltip is localized ('Математика / Уровень : 30%', no 'mastery').",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard mobile 390px — 'Сегодня' task rows", "issues": ["Task titles truncate to 'Математи...' and the difficulty badge ('Лёгкий') is clipped at the edge of the shrink-0 'Начать' button; consider stacking title/meta above the button on <sm or shortening the button to an icon"]},
+      {"screen": "Dashboard for a diagnostic-only account", "issues": ["Empty-state text says 'Пройди диагностику и создай план, чтобы получить задания' even though the diagnostic is already completed — copy should be 'Создай план...' when has_diagnostics=true"]},
+      {"screen": "Statistics — 'Прогресс во времени'", "issues": ["With a single day of data the card shows only the hint text and no point/line; acceptable but a single-point dot would look less empty"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/seed_diag_only.py", "/app/backend/tests/backend_test.py"],
+  "action_items": [
+    "Optional polish: fix mobile task-row truncation/badge clipping on Dashboard 'Сегодня' card",
+    "Optional copy fix: dashboard empty-state should not ask to pass the diagnostic when it is already completed",
+    "Remaining open items from iteration_1 (not part of this retest scope): explicit CORS_ORIGINS instead of '*', admin question form subject_id/topic_id selects, data-testid on admin question cards"
+  ],
+  "critical_code_review_comments": [
+    "routes_diagnostic.finish_diagnostic now inserts question_attempts with source='diagnostic' — verified working, but it has no idempotency guard: calling /finish twice would duplicate the 10 attempts and inflate tasks_completed. Recommend a guard on diag['status'] == 'completed' (or upsert by (user_id, question_id, source))",
+    "Local import 'from auth_utils import new_id as _nid' inside finish_diagnostic should move to module-level imports"
+  ],
+  "updated_files": ["/app/backend/tests/seed_diag_only.py", "/app/test_reports/iteration_2.json"],
+  "success_rate": {"backend": "not re-tested (frontend-only scope); seed script API calls all 200", "frontend": "100% of the 4 requested regression checks passed"},
+  "seed_data_creation": "Diagnostic-only student: qa_diag_1788281729@ls.ru / test123 (math_prof, 10/10 diagnostic answered, score 30, no practice, no plan). Created with /app/backend/tests/seed_diag_only.py.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "smoke1@ls.ru / test123 (onboarded, plan+diagnostic); qa_diag_1788281729@ls.ru / test123 (diagnostic-only); admin@lightstudy.ru / admin123. Do NOT use fix1@ls.ru (locked).",
+  "context_for_next_testing_agent": "Mobile navigation note for Playwright: on <lg viewports the sidebar is hidden but its nav links stay in the DOM, so [data-testid=\"nav-*\"] resolves to 2 elements — open [data-testid=\"mobile-menu-btn\"] first and use '[data-testid=\"nav-tutor\"]:visible'. Overflow measurement helper: page.evaluate('document.documentElement.scrollWidth - window.innerWidth') at 390px returns 0 on /app and /app/tutor now. A benign OL element (toast/list) extends past the viewport right edge on the dashboard without creating page scroll. Login page logs two 401s from the initial /auth/me + refresh attempt (expected for anonymous visitors).",
+  "rca_of_the_issue": "N/A — all three iteration_1 defects reproduce as fixed. min-w-0 on grid children removed the min-width:auto-driven track expansion; diagnostic answers are now persisted into question_attempts so dashboard/statistics aggregates include them."
+}
