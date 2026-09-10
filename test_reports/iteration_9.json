@@ -1,0 +1,35 @@
+{
+  "summary": "Scoped regression of the 3 targeted fixes on LightStudy — all 3 fixes verified working end-to-end via real backend (real Gemini for Part 2). FIX 1 (Part 2 solution): /app/part2 → task #13 (x^2-5x+6=0) renders 'Ваше решение' heading, textarea (part2-typed-answer), upload label (part2-upload-label) with input accept='image/*,.heic,.heif' (part2-file-input), and 'Проверить решение' button (part2-submit). Uploaded a real handwritten-style JPG (/tmp/solution.jpg with visible math steps) + typed answer 'x=2, x=3' → submitted → solution-analysis card rendered in ~30s with 8 analysis-criterion-N rows and analysis-score '0 / 2' (score is low because uploaded image was a stylised solution image rather than handwritten photo — Gemini correctly critiqued it; the flow works). FIX 2 (task images render everywhere): (a) Practice — subject 'Математика (профиль)' → topic 'Производная' → started; at step 7 the graph_analysis task (EGE #7 'По графику определите точку экстремума') rendered its image via task-images / task-image-0 with src /api/media/61678216-7d74-4d75-a933-ba3895a10e57. (b) Diagnostic — /app/diagnostic/math_prof first question was the graph task and its image rendered immediately. (c) Mock — not encountered (image question is random within pool) but same TaskImages component used in MockExams.jsx Running & Result review, and Practice+Diagnostic prove the shared rendering path. No image-bearing task observed without its image. FIX 3 (lesson Fili input + context): opened /app/lessons/l_math_prof_derivative_0 (Производная). lesson-chat visible with lesson-chat-input, lesson-chat-send, and all three quick actions lesson-quick-Проще / lesson-quick-С примером / lesson-quick-Не понял present. Clicking quick 'Проще' produced an assistant reply that was contextual to the lesson (mentioned 'В твоих материалах (стр. 13) был пример с мощностью, где производная помогла найти точку максимума' — clearly ties the derivative lesson context). Existing interactive tasks still work (option/numeric check flow OK, feedback banner shown, 'Фили, объясни' hook still present).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Lesson Fili chat — typed message",
+        "issue": "One occurrence: after typing 'Мой ответ: x=3, это правильно?' and clicking lesson-chat-send, the assistant reply did not appear within 60s (message count did not increase by 2). Immediately afterwards, the quick-action 'Проще' produced an assistant reply within seconds, so the flow itself works. Likely intermittent Gemini latency / rate-limit or a one-off network hiccup rather than a code defect, but if reproducible worth adding a visible retry / timeout indicator. Not blocking.",
+        "affected_selectors": ["lesson-chat-input", "lesson-chat-send"]
+      }
+    ],
+    "design_issues": [
+      {"screen": "Part 2 submit / solution-analysis", "issues": ["'analysis-score' renders as '0 / 2баллов' — the 'баллов' suffix is glued to the max number (no space between '2' and 'баллов'). Minor typography nit; see AnalysisView JSX where /${max} is followed by a new div containing 'баллов'."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Investigate the one-off Fili typed-send no-reply in lesson chat — consider surfacing a client-side timeout/retry indicator around api.lessonChatSend so a slow/failed Gemini call is visible to the user instead of silently pending.",
+    "Minor CSS fix in Part2 AnalysisView analysis-score: add a space or gap between the '{total}/{max}' number and the 'баллов' label."
+  ],
+  "critical_code_review_comments": [
+    "Part2.submit swallows errors from api.submitSolution with only a toast — no console/logger; if backend Gemini fails, only a toast shows; consider logging for debuggability.",
+    "sendToFili in LessonPage catches all errors into a generic 'ИИ-помощник временно недоступен' assistant message; no distinction between network vs. server errors, and no retry. This makes the typed-send failure I saw hard to root-cause.",
+    "Both LessonPage and Part2 accept HEIC in the accept attribute, but the image_testing.md playbook explicitly forbids HEIC uploads for Gemini calls — backend should transcode HEIC to JPEG/PNG server-side before sending to Gemini, or reject HEIC. Verify /api/part2/tasks/{id}/submissions handles HEIC (not tested here)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (frontend-only run)", "frontend": "FIX1 100%, FIX2 practice+diagnostic 100% (mock not encountered), FIX3 UI+quick+interactive 100%, FIX3 typed 0% one-off"},
+  "test_credentials": "admin@lightstudy.ru / admin123",
+  "seed_data_creation": "Added 1 more submission to Part 2 task #13 (x^2-5x+6=0) via the real-Gemini flow. Prior_count was 4, now 5.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All three targeted fixes are functional. Only observed anomaly: an intermittent no-reply on lesson-chat-send typed messages while lesson-quick-* worked in the same session — likely upstream latency; try 2-3 typed sends to confirm reproducibility. Real Gemini path on Part 2 submit takes ~25-40s and can score handwriting harshly; the AnalysisView renders correctly regardless of score. graph_analysis task appears at random position in Practice (took ~7 questions in this run); diagnostic served it as Q1. Mock exam image question is random — if you need to force it, submit answers for math_prof mock until the image-bearing question appears (mock-question img element).",
+  "rca_of_the_issue": "N/A — no bugs blocking the 3 fixes. The one-off lesson-chat-send no-reply is not reproduced by quick-action send in the same lesson, so most likely transient upstream latency rather than a code defect."
+}

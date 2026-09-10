@@ -1,8 +1,25 @@
 import React from "react";
 import { Loader2 } from "lucide-react";
+import { mediaUrl } from "@/api/client";
 
 export const MASCOT = "/mascot.png";
 export const LOGO = "/logo.jpeg";
+
+// Renders task images/diagrams/graphs/tables as first-class content (reuses GridFS media via mediaUrl).
+export function TaskImages({ images, className = "" }) {
+  if (!images || images.length === 0) return null;
+  return (
+    <div className={`mt-4 grid gap-3 ${images.length > 1 ? "sm:grid-cols-2" : ""} ${className}`} data-testid="task-images">
+      {images.map((img, i) => (
+        <figure key={i} className="rounded-xl overflow-hidden border border-[#E5DEC9] bg-white">
+          <img src={mediaUrl(img.url || img.media_id)} alt={img.caption || `Изображение ${i + 1}`}
+            data-testid={`task-image-${i}`} className="w-full object-contain max-h-72 bg-[#FAF8F3]" />
+          {img.caption && <figcaption className="text-xs text-[#8A94A6] px-3 py-2">{img.caption}</figcaption>}
+        </figure>
+      ))}
+    </div>
+  );
+}
 
 export function Wizard({ size = 48, className = "", float = false }) {
   return (

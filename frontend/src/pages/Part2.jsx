@@ -141,7 +141,7 @@ function TaskDetail({ id, onBack }) {
 
       {/* Submission */}
       <div className="ls-card p-6 mb-5">
-        <h3 className="font-display text-lg font-semibold text-[#1E2A4A] mb-3">Твоё решение</h3>
+        <h3 className="font-display text-lg font-semibold text-[#1E2A4A] mb-3">Ваше решение</h3>
         <textarea value={typed} onChange={(e) => setTyped(e.target.value)} rows={3} data-testid="part2-typed-answer"
           placeholder="Можешь набрать ответ текстом (необязательно, если загружаешь фото)…"
           className="w-full px-4 py-3 rounded-xl border-2 border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC] mb-3" />
@@ -167,7 +167,7 @@ function TaskDetail({ id, onBack }) {
 
         <button onClick={submit} disabled={submitting} data-testid="part2-submit"
           className="btn-accent w-full mt-4 inline-flex items-center justify-center gap-2 disabled:opacity-50">
-          <Sparkles className="w-4 h-4" /> {submitting ? "Фили проверяет решение…" : "Отправить на проверку"}
+          <Sparkles className="w-4 h-4" /> {submitting ? "Фили проверяет решение…" : "Проверить решение"}
         </button>
       </div>
 

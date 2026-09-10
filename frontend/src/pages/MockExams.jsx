@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { ClipboardCheck, Clock, Trophy, ArrowRight, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/api/client";
-import { Loader, EmptyState, DonutRing, masteryColor, DifficultyBadge } from "@/components/common";
+import { Loader, EmptyState, DonutRing, masteryColor, DifficultyBadge, TaskImages } from "@/components/common";
 
 const LETTERS = ["А", "Б", "В", "Г", "Д"];
 
@@ -59,6 +59,7 @@ function Running({ exam, onDone }) {
       <div className="ls-card p-6" data-testid="mock-question">
         <div className="flex items-center gap-2 mb-3"><DifficultyBadge level={q.difficulty} /><span className="text-xs text-[#8A94A6]">{q.ege_category}</span></div>
         <div className="font-display text-lg font-semibold text-[#1E2A4A] whitespace-pre-line">{q.question}</div>
+        <TaskImages images={q.images} />
         <div className="mt-5 space-y-3">
           {(q.type === "single_choice" || q.type === "true_false" || q.type === "multiple_choice") &&
             q.options.map((o, i) => {
@@ -132,6 +133,7 @@ function Result({ result, onBack }) {
             {result.review.map((r, i) => (
               <div key={i} className="p-4 rounded-xl bg-[#FAF8F3] border border-[#E5DEC9]">
                 <div className="font-medium text-[#1E2A4A]">{r.question}</div>
+                <TaskImages images={r.images} />
                 <div className="text-sm text-[#EF4444] mt-2 flex items-center gap-1.5"><X className="w-4 h-4" /> Твой ответ: {(r.type === "numeric" || r.type === "text") ? (r.student_answer ?? "—") : (r.options[r.student_answer] ?? "—")}</div>
                 <div className="text-sm text-[#10B981] flex items-center gap-1.5"><Check className="w-4 h-4" /> Правильно: {(r.type === "numeric" || r.type === "text") ? (Array.isArray(r.correct_value) ? r.correct_value.join(" / ") : r.correct_value) : r.options[r.correct_answer]}</div>
                 {r.explanation && <p className="text-sm text-[#4B5563] mt-2">{r.explanation}</p>}

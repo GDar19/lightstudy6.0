@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { ChevronRight, Check, X, CheckCircle2, Dumbbell, Sparkles, Lightbulb, Send, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/api/client";
-import { Loader, Wizard } from "@/components/common";
+import { Loader, Wizard, TaskImages } from "@/components/common";
 import AIAnswer from "@/components/AIAnswer";
 
 function InteractiveTask({ lessonId, task, index, prior, onAskFili }) {
@@ -27,6 +27,7 @@ function InteractiveTask({ lessonId, task, index, prior, onAskFili }) {
   return (
     <div className="ls-card p-5" data-testid={`interactive-task-${index}`}>
       <div className="font-medium text-[#1E2A4A] mb-3">{task.prompt}</div>
+      <TaskImages images={task.images} className="mb-3 mt-0" />
       {isChoice ? (
         <div className="space-y-2">
           {task.options.map((o, i) => {
@@ -82,6 +83,7 @@ function MiniQuestion({ q, index }) {
   return (
     <div className="ls-card p-5" data-testid={`mini-question-${index}`}>
       <div className="font-medium text-[#1E2A4A] mb-3">{q.question}</div>
+      <TaskImages images={q.images} className="mb-3 mt-0" />
       <div className="space-y-2">
         {q.options.map((o, i) => {
           let cls = "border-[#E5DEC9] bg-[#FAF8F3] hover:border-[#C5BCFA]";
@@ -283,7 +285,7 @@ export default function LessonPage() {
         </div>
 
         <div className="px-4 py-2 border-t border-[#E5DEC9] flex gap-2 overflow-x-auto">
-          {[["Объясни проще", "Объясни проще"], ["Дай похожую задачу", "Дай похожую тренировочную задачу по теме урока"], ["Проверь моё решение", "Проверь моё решение"]].map(([label, text]) => (
+          {[["Проще", "Объясни это, пожалуйста, проще."], ["С примером", "Покажи это на конкретном примере с решением."], ["Не понял", "Я не понял. Объясни, пожалуйста, ещё раз по шагам."]].map(([label, text]) => (
             <button key={label} onClick={() => sendToFili(text)} disabled={chatSending} data-testid={`lesson-quick-${label}`}
               className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-full bg-[#EEEAFB] text-[#7C66DC] hover:bg-[#E3DCF7] disabled:opacity-50">{label}</button>
           ))}

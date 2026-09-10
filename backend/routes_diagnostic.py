@@ -29,6 +29,12 @@ def strip_answer(q: dict) -> dict:
         "difficulty": q["difficulty"], "topic_id": q["topic_id"],
         "type": q.get("type", "single_choice"), "hint": q.get("hint", ""),
         "exam_part": q.get("exam_part", ""), "ege_category": q.get("ege_category"),
+        "ege_task_number": q.get("ege_task_number", ""),
+        "images": q.get("images", []),
+        "answer_format": q.get("answer_format", "single_choice"),
+        "match_left": q.get("match_left", []), "match_right": q.get("match_right", []),
+        "order_items": q.get("order_items", []),
+        "table_headers": q.get("table_headers", []), "table_rows": q.get("table_rows", []),
     }
 
 

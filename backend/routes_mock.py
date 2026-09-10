@@ -27,7 +27,8 @@ def strip_answer(q: dict) -> dict:
     return {"id": q["id"], "question": q["question"], "options": q.get("options", []),
             "difficulty": q["difficulty"], "topic_id": q["topic_id"],
             "type": q.get("type", "single_choice"), "hint": q.get("hint", ""),
-            "exam_part": q.get("exam_part", ""), "ege_category": q.get("ege_category")}
+            "exam_part": q.get("exam_part", ""), "ege_category": q.get("ege_category"),
+            "ege_task_number": q.get("ege_task_number", ""), "images": q.get("images", [])}
 
 
 @router.get("/mock-exams")
@@ -104,6 +105,7 @@ async def finish_mock(attempt_id: str, body: MockSubmitIn, user: dict = Depends(
         if not is_correct:
             review.append({
                 "question": q["question"], "options": q.get("options", []),
+                "images": q.get("images", []),
                 "student_answer": ans, "correct_answer": q.get("answer"),
                 "correct_value": q.get("answer_value"), "type": q.get("type", "single_choice"),
                 "explanation": q["explanation"],
