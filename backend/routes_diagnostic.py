@@ -43,9 +43,9 @@ async def start_diagnostic(body: StartIn, user: dict = Depends(get_current_user)
     subject = clean(await db.subjects.find_one({"id": body.subject_id}))
     if not subject:
         raise HTTPException(status_code=404, detail="Предмет не найден")
-    questions = clean_list(await db.questions.find({"subject_id": body.subject_id}).to_list(200))
+    questions = clean_list(await db.questions.find({"subject_id": body.subject_id, "status": "published", "type": {"$ne": "extended_response"}}).to_list(200))
     if not questions:
-        raise HTTPException(status_code=400, detail="Для этого предмета пока нет вопросов")
+        raise HTTPException(status_code=400, detail="По выбранным параметрам пока нет опубликованных заданий.")
     # spread across topics, biased toward EGE-level (harder first within each topic)
     _rank = {"ege": 0, "hard": 1, "medium": 2, "easy": 3}
     questions_sorted = sorted(questions, key=lambda q: (q["topic_id"], _rank.get(q["difficulty"], 2)))

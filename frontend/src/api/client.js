@@ -121,6 +121,9 @@ export const api = {
   createQuestion: (d) => client.post("/admin/questions", d),
   updateQuestion: (id, d) => client.patch(`/admin/questions/${id}`, d),
   verifyQuestion: (id, verified) => client.patch(`/admin/questions/${id}/verify`, { verified }),
+  setQuestionStatus: (id, status) => client.patch(`/admin/questions/${id}/status`, { status }),
+  duplicateQuestion: (id) => client.post(`/admin/questions/${id}/duplicate`),
+  questionStats: () => client.get("/admin/questions/stats"),
   deleteQuestion: (id) => client.delete(`/admin/questions/${id}`),
 };
 

@@ -65,6 +65,17 @@ profile & difficulty update → next task. Real data only (zeros/empty states fo
 - Polish fixes applied to KnowledgeBase.jsx: delete confirmation dialog, delete/poll race guard (removedRef), Russian pluralization (1 фрагмент/страница), data-testid on search subject select.
 - Admin creds: admin@lightstudy.ru / admin123. KB is a TAB in /app/admin, not a route.
 
+## Admin-controlled task bank (2026-06) — Phase 5 ✅ (iteration_10, backend 19/19, all 7 acceptance tests pass)
+Core principle enforced: **ADMIN CREATES → VERIFIES → PUBLISHES → STUDENT SOLVES**. AI never creates/publishes bank tasks (kept disabled for future use).
+
+### Changed files
+- Backend: `routes_admin.py` (QuestionIn +subtopic/source/status; `_validate_publish`; new `/admin/questions/stats`, `/status`, `/duplicate`; list filters+search+sort), `routes_practice.py` (removed AI smart top-up; query `status:published`; friendly empty msg; `generate_and_store_tasks` kept but never called), `routes_diagnostic.py` & `routes_mock.py` (published-only), `seed.py` (idempotent core seeding, status default published, migration archiving ai_generated tasks), `content_data.py` (Стереометрия topic + 4 seed Qs), `routes_diagnostic.py`/`routes_mock.py` strip_answer include images (earlier fix).
+- Frontend: `AdminTasks.jsx` (stats panel, status workflow draft/verification/published/archived, subtopic/source/status fields, search/sort/status filters, duplicate/publish/archive), `Practice.jsx` (AI toggle removed), `LessonPage.jsx` (embedded Fili chat removed → `openFili()` navigates to `/app/tutor` with lesson context auto-sent), `common.jsx` (shared `TaskImages`), `MockExams.jsx`/`LessonPage.jsx` (task images), `api/client.js` (setQuestionStatus/duplicateQuestion/questionStats).
+
+### Behavior
+- Task status workflow with publish validation (can't publish without required fields). Bank stats for admins. Стереометрия live in practice/admin/filters/stats. AI-generated Phase-4 tasks migrated to `archived` (hidden from students). Practice/Diagnostic/Mock serve published only; clear empty message instead of AI fallback. Lesson "Фили объяснит" opens the full AI chat with context (no embedded mini-chat).
+- Known minor (not fixed, non-blocking): AdminTasks single_choice `answer` defaults to 0, so publishing without explicitly picking a correct option submits answer=0 (data-quality nicety, MEDIUM).
+
 ## Multimodal upgrade (2026-06) — Phases 1–4 (all tested & passing)
 User choices: **Gemini vision** (gemini-3-flash-preview) via Emergent Universal Key, reuse **GridFS** for images, **HEIC** supported (pillow_heif), preserve existing UI.
 

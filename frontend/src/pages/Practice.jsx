@@ -13,7 +13,6 @@ function Picker({ onStart }) {
   const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [count, setCount] = useState(10);
-  const [smart, setSmart] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,16 +69,9 @@ function Picker({ onStart }) {
               </select>
             </div>
           </div>
-          <label className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer mb-5 transition-all ${smart ? "border-[#7C66DC] bg-[#EEEAFB]" : "border-[#E5DEC9] bg-[#FAF8F3] hover:border-[#C5BCFA]"}`} data-testid="practice-smart-toggle">
-            <input type="checkbox" checked={smart} onChange={(e) => setSmart(e.target.checked)} className="mt-0.5 accent-[#7C66DC]" data-testid="practice-smart-checkbox" />
-            <div>
-              <div className="text-sm font-medium text-[#1E2A4A] flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-[#7C66DC]" /> Добавить задания от ИИ</div>
-              <div className="text-xs text-[#8A94A6]">Фили сгенерирует новые задания уровня ЕГЭ по этой теме на основе загруженных учебников.</div>
-            </div>
-          </label>
         </>
       )}
-      <button disabled={!subject} onClick={() => onStart(subject, topic, { difficulty, count, smart })} data-testid="start-practice-btn"
+      <button disabled={!subject} onClick={() => onStart(subject, topic, { difficulty, count })} data-testid="start-practice-btn"
         className="btn-accent w-full inline-flex items-center justify-center gap-2 disabled:opacity-50">
         <Dumbbell className="w-4 h-4" /> Начать
       </button>
@@ -92,19 +84,16 @@ export default function Practice() {
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
   const [starting, setStarting] = useState(false);
-  const [startingSmart, setStartingSmart] = useState(false);
   const [result, setResult] = useState(null);
 
   const start = async (subject, topic, opts = {}) => {
     const mode = typeof opts === "string" ? opts : (opts.mode || "adaptive");
     const difficulty = typeof opts === "object" ? opts.difficulty || null : null;
     const count = typeof opts === "object" ? opts.count || 10 : 10;
-    const smart = typeof opts === "object" ? !!opts.smart : false;
     setStarting(true);
-    setStartingSmart(smart);
     setResult(null);
     try {
-      const { data } = await api.startPractice({ subject_id: subject, topic_id: topic || null, mode, difficulty, count, smart });
+      const { data } = await api.startPractice({ subject_id: subject, topic_id: topic || null, mode, difficulty, count });
       setSession(data);
     } catch (e) {
       toast.error(e.response?.data?.detail || "Не удалось начать практику");
@@ -138,7 +127,7 @@ export default function Practice() {
     navigate(`/app/tutor?topic=${q.topic_id}&q=${encodeURIComponent("Помоги разобраться: " + q.question)}`);
   };
 
-  if (starting) return <Loader full label={startingSmart ? "Фили создаёт задания по учебникам…" : "Готовим задания…"} />;
+  if (starting) return <Loader full label="Готовим задания…" />;
 
   if (result) {
     return (

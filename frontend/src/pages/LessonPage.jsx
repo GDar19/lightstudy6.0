@@ -1,10 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronRight, Check, X, CheckCircle2, Dumbbell, Sparkles, Lightbulb, Send, RotateCcw } from "lucide-react";
+import { ChevronRight, Check, X, CheckCircle2, Dumbbell, Sparkles, Lightbulb, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/api/client";
 import { Loader, Wizard, TaskImages } from "@/components/common";
-import AIAnswer from "@/components/AIAnswer";
 
 function InteractiveTask({ lessonId, task, index, prior, onAskFili }) {
   const isChoice = task.type === "single_choice" || task.type === "true_false";
@@ -112,37 +111,19 @@ export default function LessonPage() {
   const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [completed, setCompleted] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [chatInput, setChatInput] = useState("");
-  const [chatSending, setChatSending] = useState(false);
   const [replayKey, setReplayKey] = useState(0);
-  const chatRef = useRef(null);
-  const chatBottomRef = useRef(null);
 
   useEffect(() => {
     api.lesson(id).then(({ data }) => setLesson(data)).catch(() => {}).finally(() => setLoading(false));
-    api.lessonChat(id).then(({ data }) => setMessages(data.messages || [])).catch(() => {});
   }, [id]);
 
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, chatSending]);
-
-  const sendToFili = async (text, taskIndex = null) => {
-    const msg = (typeof text === "string" ? text : chatInput).trim();
-    if (!msg || chatSending) return;
-    if (typeof text !== "string") setChatInput("");
-    chatRef.current?.scrollIntoView({ behavior: "smooth" });
-    setMessages((m) => [...m, { role: "user", content: msg, id: `u${Date.now()}` }]);
-    setChatSending(true);
-    try {
-      const { data } = await api.lessonChatSend(id, { message: msg, task_index: taskIndex });
-      setMessages((m) => [...m, { role: "assistant", content: data.answer, id: `a${Date.now()}` }]);
-    } catch {
-      setMessages((m) => [...m, { role: "assistant", content: "ИИ-помощник временно недоступен. Попробуй ещё раз.", id: `e${Date.now()}` }]);
-    } finally {
-      setChatSending(false);
-    }
+  // Open the full-featured Fili AI chat with the current lesson context auto-loaded.
+  const openFili = (extra) => {
+    if (!lesson) return;
+    const base = `Я сейчас изучаю тему: «${lesson.title}» (урок платформы LightStudy).`;
+    const tail = extra || "Объясни мне эту тему простым языком и помоги разобраться с текущим материалом.";
+    const msg = `${base} ${tail}`;
+    navigate(`/app/tutor?topic=${lesson.topic_id}&lesson=${id}&q=${encodeURIComponent(msg)}`);
   };
 
   const replayTasks = () => {
@@ -181,9 +162,9 @@ export default function LessonPage() {
         {lesson.status === "in_progress" && !completed && (
           <span className="text-xs font-semibold text-[#F59E0B] bg-[#FEF3C7] px-2.5 py-1 rounded-full">В процессе</span>
         )}
-        <button onClick={() => sendToFili("Объясни тему урока «" + lesson.title + "» простыми словами.")}
+        <button onClick={() => openFili()}
           data-testid="lesson-ask-fili-btn" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#7C66DC] hover:underline ml-auto">
-          <Sparkles className="w-4 h-4" /> Фили, объясни
+          <Sparkles className="w-4 h-4" /> Фили объяснит
         </button>
       </div>
 
@@ -234,7 +215,7 @@ export default function LessonPage() {
           <div className="space-y-3">
             {lesson.interactive_tasks.map((t, i) => (
               <InteractiveTask key={`${replayKey}-${i}`} lessonId={id} task={t} index={i}
-                prior={lesson.prior_answers?.[i]} onAskFili={sendToFili} />
+                prior={lesson.prior_answers?.[i]} onAskFili={(text) => openFili(text)} />
             ))}
           </div>
         </section>
@@ -250,55 +231,16 @@ export default function LessonPage() {
         </section>
       )}
 
-      {/* Фили — контекстный чат урока */}
-      <section ref={chatRef} className="ls-card p-0 mb-5 overflow-hidden" data-testid="lesson-chat">
-        <div className="flex items-center gap-3 px-5 py-3 border-b border-[#E5DEC9] bg-[#FAF8F3]">
-          <Wizard size={36} />
-          <div>
-            <div className="font-display font-semibold text-[#1E2A4A]">Фили — репетитор урока</div>
-            <div className="text-xs text-[#8A94A6]">Задай вопрос или ответь на вопрос Фили прямо здесь</div>
-          </div>
+      {/* Фили — открывается полноценный ИИ-чат с контекстом урока */}
+      <section className="ls-card p-5 mb-5 flex items-center gap-4" data-testid="lesson-fili-cta">
+        <Wizard size={44} />
+        <div className="flex-1">
+          <div className="font-display font-semibold text-[#1E2A4A]">Нужна помощь с темой?</div>
+          <div className="text-sm text-[#8A94A6]">Открой полноценный чат с Фили — контекст этого урока подставится автоматически.</div>
         </div>
-
-        <div className="max-h-[360px] overflow-y-auto px-4 py-4 space-y-3" data-testid="lesson-chat-messages">
-          {messages.length === 0 && !chatSending && (
-            <div className="text-center py-6">
-              <Wizard size={64} float />
-              <p className="text-sm text-[#4B5563] mt-3 max-w-sm mx-auto">Привет! Спроси меня о теме урока, попроси объяснить пример или проверить твоё решение.</p>
-            </div>
-          )}
-          {messages.map((m) => (
-            <div key={m.id} className={`flex gap-2.5 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
-              {m.role === "assistant" && <Wizard size={30} className="shrink-0 mt-1" />}
-              <div className={`max-w-[82%] px-4 py-2.5 rounded-2xl ${m.role === "user" ? "bg-[#7C66DC] text-white rounded-tr-sm" : "bg-[#FAF8F3] border border-[#E5DEC9] rounded-tl-sm"}`}>
-                {m.role === "user" ? <span className="whitespace-pre-wrap">{m.content}</span> : <AIAnswer text={m.content} />}
-              </div>
-            </div>
-          ))}
-          {chatSending && (
-            <div className="flex gap-2.5">
-              <Wizard size={30} className="shrink-0 mt-1" />
-              <div className="px-4 py-3 rounded-2xl bg-[#FAF8F3] border border-[#E5DEC9] rounded-tl-sm"><AIAnswer loading /></div>
-            </div>
-          )}
-          <div ref={chatBottomRef} />
-        </div>
-
-        <div className="px-4 py-2 border-t border-[#E5DEC9] flex gap-2 overflow-x-auto">
-          {[["Проще", "Объясни это, пожалуйста, проще."], ["С примером", "Покажи это на конкретном примере с решением."], ["Не понял", "Я не понял. Объясни, пожалуйста, ещё раз по шагам."]].map(([label, text]) => (
-            <button key={label} onClick={() => sendToFili(text)} disabled={chatSending} data-testid={`lesson-quick-${label}`}
-              className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-full bg-[#EEEAFB] text-[#7C66DC] hover:bg-[#E3DCF7] disabled:opacity-50">{label}</button>
-          ))}
-        </div>
-
-        <div className="p-3 border-t border-[#E5DEC9] flex items-end gap-2">
-          <textarea value={chatInput} onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendToFili(); } }}
-            placeholder="Спросите Фили о чём угодно или введите ответ…" rows={1} data-testid="lesson-chat-input"
-            className="flex-1 resize-none px-4 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC] max-h-32" />
-          <button onClick={() => sendToFili()} disabled={chatSending || !chatInput.trim()} data-testid="lesson-chat-send"
-            className="btn-accent p-3 rounded-xl disabled:opacity-50"><Send className="w-5 h-5" /></button>
-        </div>
+        <button onClick={() => openFili()} data-testid="lesson-open-fili-btn" className="btn-accent inline-flex items-center gap-2 shrink-0">
+          <Sparkles className="w-4 h-4" /> Фили объяснит
+        </button>
       </section>
 
       {/* Actions */}

@@ -16,6 +16,9 @@ def _normalize_question(doc: dict) -> dict:
     doc.setdefault("tags", [])
     doc.setdefault("answer_value", None)
     doc.setdefault("subtopic_id", None)
+    doc.setdefault("status", "published")   # seed/admin content is published by default
+    doc.setdefault("verified", True)
+    doc.setdefault("ai_generated", False)
     doc["difficulty_level"] = DIFFICULTY_LEVEL.get(doc.get("difficulty", "medium"), 3)
     return doc
 
@@ -47,20 +50,28 @@ async def seed_content():
     for s in E.EXTRA_SUBJECTS:
         await db.subjects.update_one({"id": s["id"]}, {"$set": s}, upsert=True)
 
-    # Core questions (insert once) with normalized schema
-    if await db.questions.count_documents({"source": {"$ne": "admin"}}) == 0:
-        docs = []
-        for i, qd in enumerate(C.QUESTIONS):
-            doc = _normalize_question(dict(qd))
-            doc["id"] = f"q_{qd['subject_id']}_{qd['topic_id']}_{i}"
-            docs.append(doc)
-        if docs:
-            await db.questions.insert_many(docs)
-    else:
-        # backfill new schema fields on existing core questions
-        async for existing in db.questions.find({"type": {"$exists": False}}):
-            await db.questions.update_one({"id": existing["id"]}, {"$set": _normalize_question({
-                "difficulty": existing.get("difficulty", "medium")})})
+    # Core questions — idempotent upsert by stable id (adds new topics like stereometry
+    # without touching existing docs or student data)
+    for i, qd in enumerate(C.QUESTIONS):
+        doc = _normalize_question(dict(qd))
+        doc["id"] = f"q_{qd['subject_id']}_{qd['topic_id']}_{i}"
+        await db.questions.update_one(
+            {"id": doc["id"]},
+            {"$set": {k: v for k, v in doc.items() if k not in ("status", "verified")},
+             "$setOnInsert": {"status": "published", "verified": True}},
+            upsert=True,
+        )
+    # backfill schema fields on any legacy questions missing type
+    async for existing in db.questions.find({"type": {"$exists": False}}):
+        await db.questions.update_one({"id": existing["id"]}, {"$set": _normalize_question({
+            "difficulty": existing.get("difficulty", "medium")})})
+
+    # One-time status migration: AI-generated bank tasks are archived (hidden from students);
+    # everything else defaults to published so existing content keeps working.
+    await db.questions.update_many(
+        {"status": {"$exists": False}, "ai_generated": True}, {"$set": {"status": "archived"}})
+    await db.questions.update_many(
+        {"status": {"$exists": False}}, {"$set": {"status": "published", "verified": True}})
 
     # Hard EGE questions — rebuild from source each startup (keeps content authoritative, no orphans)
     await db.questions.delete_many({"source": "LightStudy EGE"})

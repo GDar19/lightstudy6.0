@@ -120,7 +120,7 @@ async def start_practice(body: StartPracticeIn, user: dict = Depends(get_current
             qids = [m["question_id"] for m in mistakes if m["topic_id"] == body.topic_id]
         questions = clean_list(await db.questions.find({"id": {"$in": qids}}).to_list(100))
     else:
-        query = {"subject_id": body.subject_id}
+        query = {"subject_id": body.subject_id, "status": "published"}
         if body.topic_id:
             query["topic_id"] = body.topic_id
         if body.difficulty:
@@ -132,16 +132,9 @@ async def start_practice(body: StartPracticeIn, user: dict = Depends(get_current
             query["type"] = {"$ne": "extended_response"}
         questions = clean_list(await db.questions.find(query).to_list(300))
 
-    # hybrid smart mode: top up with fresh AI-generated, KB-grounded EGE tasks
-    if body.smart and body.mode != "mistakes" and body.topic_id:
-        want = max(1, min(body.count or 10, 40))
-        gen_diff = body.difficulty or await _recommended_difficulty(user["id"], body.topic_id)
-        need = min(5, max(1, want - len(questions)))
-        generated = await generate_and_store_tasks(body.subject_id, body.topic_id, gen_diff, need)
-        questions = generated + questions
-
+    # NOTE: AI never creates/publishes bank tasks. Practice serves only admin-published tasks.
     if not questions:
-        raise HTTPException(status_code=400, detail="Нет заданий по заданным параметрам")
+        raise HTTPException(status_code=400, detail="По выбранным параметрам пока нет опубликованных заданий.")
 
     # adaptive: prefer recommended difficulty for the topic
     if body.topic_id and body.mode == "adaptive" and not body.difficulty:

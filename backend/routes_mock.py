@@ -51,9 +51,9 @@ async def start_mock(body: StartMockIn, user: dict = Depends(get_current_user)):
     subject = clean(await db.subjects.find_one({"id": body.subject_id}))
     if not subject:
         raise HTTPException(status_code=404, detail="Предмет не найден")
-    questions = clean_list(await db.questions.find({"subject_id": body.subject_id}).to_list(300))
+    questions = clean_list(await db.questions.find({"subject_id": body.subject_id, "status": "published", "type": {"$ne": "extended_response"}}).to_list(300))
     if not questions:
-        raise HTTPException(status_code=400, detail="Нет вопросов для пробника")
+        raise HTTPException(status_code=400, detail="По выбранному предмету пока нет опубликованных заданий для пробника.")
     # exam-like selection: bias toward hard/ege, keep some medium
     _rank = {"ege": 0, "hard": 1, "medium": 2, "easy": 3}
     import random

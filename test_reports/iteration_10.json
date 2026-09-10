@@ -1,0 +1,45 @@
+{
+  "summary": "Phase 5 (admin-controlled task bank, Стереометрия topic, no-AI-in-bank, lesson→Fili full-chat flow) validated end-to-end. Backend: 19/19 pytest in /app/backend/tests/test_admin_bank_workflow.py (~4.3s). Frontend: TEST 1 admin task creation with subtopic/source/image/status=published works; row shows 'Опубликовано' badge + subtopic + source; task-stats panel renders (Всего/Опубликовано/Черновики/На проверке/В архиве/С картинками). TEST 1b publish-validation: backend returns 400 with 'Нельзя опубликовать: не заполнены обязательные поля — правильный ответ' when publishing without answer/question (verified via pytest). TEST 2/3 verified in UI: student practice on math_prof→Стереометрия→Лёгкий showed the admin-created 'TEST_UI_IMG: изображение куба' task with the exact uploaded image loading from https://.../api/media/{media_id} (naturalWidth > 0, image element rendered), and 'Верно!' feedback appeared on correct answer (option-1). TEST 4 Fili from lesson: /app/lessons/l_math_prof_derivative_0 has NO embedded lesson-chat-input; lesson-open-fili-btn present; clicking navigates to /app/tutor?topic=derivative&lesson=l_math_prof_derivative_0&q=<pre-filled lesson context>, real Gemini replied with a contextual derivative-aware answer within ~6-8s, chat-input + chat-send-btn present for continuation. TEST 6: Practice picker has NO 'Добавить задания от ИИ' toggle/checkbox (practice-smart-toggle count=0), POST /api/practice/start with (math_prof, stereometry, difficulty=ege, qtype=matching) returns 400 'По выбранным параметрам пока нет опубликованных заданий', GET /admin/questions?ai_generated=true returns only status='archived' rows. TEST 7: Стереометрия topic appears in Practice topic dropdown and has 4 seed published questions. Admin management: search (task-search), status filter, sort=recent, duplicate (creates draft, verified=false, ai_generated=false, prefixed '(копия)'), status transitions draft→verification→published→archived all working. TEST 5 (Part 2) not re-tested (fully validated in iteration_9). Cleanup: all TEST_* tasks deleted at end.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /admin/questions?search=", "issue": "Search value is used as a raw regex — special chars like '(' cause 'invalid regex' or 0 hits (e.g. searching '(копия)' returns nothing). Should re.escape or use $text index."},
+      {"endpoint": "POST /admin/questions/{id}/duplicate", "issue": "Duplicate copies scoring/answer verbatim but sets ai_generated=false; however it also unconditionally re-uses images list (same media_ids). Deleting the original later would leave duplicates dangling if media_id GC is enabled — currently fine since media isn't GC'd, but worth flagging."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "AdminTasks editor (edit-save)", "issue": "Save button disable condition only checks subject/topic/question — it does not require a correct answer for auto-answer types. When status=published is chosen with options filled but no correct answer selected, edit-save is enabled, backend correctly rejects with 400, and the toast.error() briefly shows but the editor closes on the catch (no, actually stays open per code); however visually the user has no persistent indicator of which field is missing.", "selector": "[data-testid='edit-save']", "priority": "LOW"},
+      {"component": "AdminTasks editor default answer", "issue": "For type=single_choice the initial form.answer defaults to 0 (first option), so a user who fills options and presses Save without explicitly clicking a correct-choice radio still submits answer=0 — a task can be published with an unintentional correct answer. Consider defaulting answer=null and validating on the client.", "selector": "[data-testid='edit-correct-0']", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "AdminTasks task-stats", "issues": ["Numbers are concatenated with their labels ('136Всего 124Опубликовано …') — needs whitespace or better typography separation. Cosmetic only."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_bank_workflow.py",
+    "/app/test_reports/pytest/admin_bank_workflow.xml"
+  ],
+  "action_items": [
+    "AdminTasks: default form.answer to null (not 0) for single_choice; add client-side 'необходимо выбрать правильный ответ' guard before publishing to prevent silently publishing with default answer=0.",
+    "routes_admin.py: re.escape(search) or use MongoDB $text index for /admin/questions?search=... so '(', ')', '.', '*' don't break searches.",
+    "Optional cosmetic: add spacing in task-stats numbers/labels.",
+    "Consider surfacing a persistent inline error under status=Опубликовано when backend returns 400 (currently toast fades)."
+  ],
+  "critical_code_review_comments": [
+    "AdminTasks.jsx save(): on backend 400 the code shows toast.error but does NOT keep the editor open explicitly — flow relies on save() setting saving=false and not calling onSaved; visually the editor stays open (verified) but the toast is a Sonner toast (auto-dismiss ~4s), leaving no residual state indicating why publish failed.",
+    "routes_admin.py update_question: PATCH does not re-check that PATCH body's subject_id/topic_id match existing when clients omit — Pydantic requires them, so effectively a full-replace PATCH, not a partial one. Non-blocking but worth noting.",
+    "generate_and_store_tasks in routes_practice.py is still defined but never called; the ai_service imports are lazily inside the function, so dead-code isn't wasting startup — safe to leave until AI-in-bank is definitively removed."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_bank_workflow.py"
+  ],
+  "success_rate": {"backend": "100% (19/19)", "frontend": "100% of Phase-5 flows validated (TEST 1, 1b/backend, 2, 3, 4, 6, 7)"},
+  "test_credentials": "admin@lightstudy.ru / admin123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "During testing created and then DELETED: TEST_UI cube task with image, TEST_UI_IMG task with image, TEST_BADPUB no-answer task (accidentally saved with default answer=0), duplicate '(копия) TEST_UI…' draft, and several TEST_TX/TEST_DRAFT tasks used in backend suite. Final /admin/questions count is back to baseline (139 → 136 after cleanup). One additional media asset uploaded for image test remains in /uploads (not GC'd).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Regression suite: /app/backend/tests/test_admin_bank_workflow.py (19 tests, 4-5s, no Gemini). Practice picker no longer has smart toggle; Стереометрия is 6th topic under math_prof. Fili lesson button opens /app/tutor?topic=&lesson=&q=<lesson-context>. The 12 archived AI-generated tasks remain in DB (status=archived, hidden from students) — do not treat as bug. task-stats numeric readouts render without space between number and label (cosmetic).",
+  "rca_of_the_issue": "N/A — no blocking bugs. Only meaningful risk: AdminTasks default form.answer=0 lets a novice admin publish a single_choice task where option 0 is silently marked correct even if they never touched the radio group. See action_items."
+}
