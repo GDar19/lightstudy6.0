@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, CalendarDays, BookOpen, Dumbbell, ClipboardCheck,
   AlertTriangle, BarChart3, Sparkles, Library, Settings, LogOut, Menu, X,
-  Bell, Shield,
+  Bell, Shield, PenLine,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { Logo, Wizard } from "./common";
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/app/plan", icon: CalendarDays, label: "Мой план", testId: "nav-plan" },
   { to: "/app/subjects", icon: BookOpen, label: "Предметы", testId: "nav-subjects" },
   { to: "/app/practice", icon: Dumbbell, label: "Практика", testId: "nav-practice" },
+  { to: "/app/part2", icon: PenLine, label: "Часть 2", testId: "nav-part2" },
   { to: "/app/mock-exams", icon: ClipboardCheck, label: "Пробники", testId: "nav-mock" },
   { to: "/app/mistakes", icon: AlertTriangle, label: "Ошибки", testId: "nav-mistakes" },
   { to: "/app/statistics", icon: BarChart3, label: "Статистика", testId: "nav-stats" },

@@ -1,0 +1,43 @@
+{
+  "summary": "Phase 2 multimodal RAG backend verified end-to-end with 9 new tests + 38 Phase-1 regressions, all passing (47/47). Real LLM calls via Emergent universal key (Gemini gemini-3-flash-preview) — provider confirmed via /api/ai/status. Generated a genuine PDF (pymupdf + PIL) with Cyrillic text and an embedded triangle diagram (red height line CH from C to AB) so figure extraction was validated on a real raster image, not a blank one. Ingestion: POST /api/admin/kb/upload -> status='indexed', pages>=1, chunks>=1, figures>=1 within ~30s. Multimodal retrieval on POST /api/ai/chat returned available=true, non-empty answer, and a 'sources' array containing BOTH type='text' AND type='figure'. POST /api/ai/explain now returns answer + 'sources' (RAG wired). POST /api/ai/generate-question still works via the new retrieve_multimodal path and includes 'sources'. In-lesson POST /api/lessons/{lesson_id}/chat returns an answer with KB figures fed to the model. DELETE /api/admin/kb/{doc_id} removes the doc AND its kb_figures records AND their /api/media/{media_id} entries (verified 404 after delete). POST /api/admin/kb/{doc_id}/reprocess re-indexes without duplicating figures. Regression: POST /api/admin/kb/search and Phase-1 practice/answer/admin question endpoints all still green.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "kb_service.process_document", "issue": "Sync CPU-bound pymupdf work (page.get_text, get_images, extract_image, PIL normalize inside media_service.store_image) runs inside a FastAPI BackgroundTask on the event loop. A real 400-page textbook with many images will block the whole ASGI worker. Wrap in asyncio.to_thread / run_in_executor."},
+      {"endpoint": "kb_service.retrieve", "issue": "Cap raised from 2000 -> 4000 but still hard capped + still refits TfidfVectorizer on every request. Above 4000 chunks silently disappears from search; latency scales O(corpus) per query."},
+      {"endpoint": "kb_service.retrieve", "issue": "When subject_id filter yields 0 chunks, still falls back to ALL chunks (line 122-123). A subject-scoped multimodal request can therefore silently return off-subject text/figures — misleading citations in /ai/chat and /ai/explain."},
+      {"endpoint": "routes_ai.py /ai/chat, /ai/explain, /ai/generate-question", "issue": "Every RAG path is wrapped in a bare 'except Exception' that silently swallows retrieval errors (sets sources=[]). No logging — a broken retrieval will not be observable in prod."},
+      {"endpoint": "routes_ai.py /ai/generate-question", "issue": "Passes subject_id=None to retrieve_multimodal when topic_id not in index; combined with the null-subject fallback in retrieve(), this can pull from ANY subject's KB when generating a question for an unknown topic."},
+      {"endpoint": "kb_service._delete_figures", "issue": "figures are deleted with .to_list(2000) — a doc with >2000 figures would leak the tail. Use a cursor loop or delete via aggregation of media_ids."},
+      {"endpoint": "routes_kb.py delete_document", "issue": "Not idempotent w.r.t. concurrent delete + reprocess: DELETE then reprocess race can leave orphan kb_chunks/kb_figures if reprocess re-inserts after delete_many."},
+      {"endpoint": "routes_ai.py /ai/explain (line 200)", "issue": "Returns sources only on success; the except branch returns {'answer': AI_UNAVAILABLE, 'available': True} WITHOUT a 'sources' key, breaking clients that always destructure it. Same asymmetry in /ai/generate-question."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_multimodal_rag.py",
+    "/app/test_reports/pytest/multimodal_rag.xml"
+  ],
+  "action_items": [
+    "Offload PDF/image processing off the event loop (asyncio.to_thread) and add an upload size / page cap.",
+    "Remove/paginate the 4000-chunk cap in retrieve() and persist TF-IDF (or switch to embeddings).",
+    "Do NOT fall back to all-subjects when a subject filter yields 0 chunks — return [] so citations stay scoped.",
+    "Add logging (logger.exception) inside the 'except Exception' blocks in routes_ai.py; do not silently swallow RAG errors.",
+    "Always include a 'sources' key (possibly empty) in ALL /ai/explain and /ai/generate-question response branches.",
+    "Guard /ai/generate-question against subject_id=None so it doesn't cross-contaminate KB across subjects."
+  ],
+  "critical_code_review_comments": [
+    "kb_service.retrieve() subject-filter fallback (lines 122-123) is a correctness bug for multimodal citations, not just a minor issue.",
+    "All three AI endpoints share duplicated retrieve_multimodal + build_rag_context + kb_service import blocks — extract a helper _rag(subject_id, query).",
+    "MIN_FIG_DIM=80, MIN_FIG_BYTES=3500 are hard-coded magic numbers with no config toggle — tune per subject if needed.",
+    "process_document uses insert_one per chunk (line 75); use insert_many batched (still open from iteration_4)."
+  ],
+  "updated_files": ["/app/backend/tests/test_multimodal_rag.py"],
+  "success_rate": {"backend": "100% (9/9 new + 38/38 regression = 47/47)", "frontend": "N/A (skipped per request)"},
+  "test_credentials": "admin@lightstudy.ru / admin123 ; student@lightstudy.ru / student123 (auto-registered if missing)",
+  "seed_data_creation": "Test uploaded/deleted PDFs 'TEST_Геометрия треугольник высота' and 'TEST_delete_lifecycle' (both cleaned up via DELETE at end of session). Pre-existing 'Геометрия треугольник' doc from previous run left untouched.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 2 multimodal RAG is stable. Use /app/backend/tests/test_multimodal_rag.py as the regression suite (run with -n 0 since it uses session-scoped fixtures + real LLM). Test PDF is generated in-code via pymupdf + PIL (real red-line triangle diagram embedded as PNG). Retry-once pattern is used for occasional Gemini fallbacks — do not increase to more retries or you'll burn tokens. Known remaining issues are all listed in backend_issues.minor; none block the phase.",
+  "rca_of_the_issue": "N/A — no bugs found in the Phase 2 scope. The previously reported figure-count>=1 case (from the live pre-check by the main agent) reproduces reliably: pymupdf page.get_images picks up the embedded PNG, MIN_FIG_DIM/MIN_FIG_BYTES filters accept it, media_service.store_image normalizes to JPEG in the 'media' GridFS bucket, and kb_service.retrieve_figures pulls the same-page figure whenever the top text chunk is on that page — so /ai/chat gets both text and figure sources into build_rag_context and Gemini describes the red CH height line correctly."
+}

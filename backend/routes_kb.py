@@ -51,6 +51,7 @@ async def delete_document(doc_id: str, admin: dict = Depends(require_admin)):
         raise HTTPException(status_code=404, detail="Документ не найден")
     if doc.get("gridfs_id"):
         await kb_service.delete_file(doc["gridfs_id"])
+    await kb_service._delete_figures(doc_id)
     await db.kb_chunks.delete_many({"doc_id": doc_id})
     await db.kb_documents.delete_one({"id": doc_id})
     return {"ok": True}

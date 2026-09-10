@@ -19,6 +19,7 @@ import SubjectDetail from "@/pages/SubjectDetail";
 import TopicPage from "@/pages/TopicPage";
 import LessonPage from "@/pages/LessonPage";
 import Practice from "@/pages/Practice";
+import Part2 from "@/pages/Part2";
 import MockExams from "@/pages/MockExams";
 import Mistakes from "@/pages/Mistakes";
 import Statistics from "@/pages/Statistics";
@@ -71,6 +72,8 @@ function App() {
             <Route path="/app/topics/:id" element={<Protected><Shell><TopicPage /></Shell></Protected>} />
             <Route path="/app/lessons/:id" element={<Protected><Shell><LessonPage /></Shell></Protected>} />
             <Route path="/app/practice" element={<Protected><Shell><Practice /></Shell></Protected>} />
+            <Route path="/app/part2" element={<Protected><Shell><Part2 /></Shell></Protected>} />
+            <Route path="/app/part2/:id" element={<Protected><Shell><Part2 /></Shell></Protected>} />
             <Route path="/app/mock-exams" element={<Protected><Shell><MockExams /></Shell></Protected>} />
             <Route path="/app/mistakes" element={<Protected><Shell><Mistakes /></Shell></Protected>} />
             <Route path="/app/statistics" element={<Protected><Shell><Statistics /></Shell></Protected>} />

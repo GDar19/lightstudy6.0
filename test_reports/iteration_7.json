@@ -1,0 +1,53 @@
+{
+  "summary": "Phase 3 (Part 2 extended-response solutions with multimodal Gemini vision) tested end-to-end. Backend: 19/19 new pytest cases green in ~73s (real Gemini calls) covering list/detail/auth, subject filter, empty state, validation (empty submit, junk image, >5 files), typed-only submit, image submit (PNG handwriting, WEBP), multi-image, HEIC pipeline (pillow_heif -> normalized to JPEG/PNG served under /api/media/{id}), submissions endpoint + per-user scoping, and regression (extended_response excluded from /api/practice/start). Frontend: /app/part2 loads with nav 'Часть 2' (data-testid=nav-part2), subject select, task card (part2-task-<id>) for math_prof #13. Task detail renders scoring criteria (2 крит, до 2 б.), file upload via part2-upload-label -> part2-file-previews with remove buttons, typed_answer editable, part2-submit triggers real Gemini multimodal call, solution-analysis card with analysis-score (0/2 or up to 2/2 depending on solution quality) and analysis-criterion-<i> rows appears within ~60s. Past submissions section lists prior attempts. Back link returns to list. No blocking bugs found.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/part2/tasks/{id}/submit", "issue": "analyze_solution errors are silently swallowed (bare except -> analysis=None). No logger.exception; a broken Gemini call is invisible in prod logs."},
+      {"endpoint": "POST /api/part2/tasks/{id}/submit", "issue": "MAX_UPLOAD (12MB) is checked per-file only. A user could POST 5×12MB=60MB in one request; there is no aggregate size guard nor FastAPI-level max_request_size — risks worker memory on slow links."},
+      {"endpoint": "POST /api/part2/tasks/{id}/submit", "issue": "get_image_base64 is called once per stored image sequentially (await round-trip to GridFS for each). For 5 images this doubles latency of an already 15-30s Gemini call. Read bytes from `norm` in-memory during store_image and pass base64 straight through — avoid the second GridFS fetch."},
+      {"endpoint": "solution_analysis.analyze_solution", "issue": "_extract_json takes substring between first '{' and last '}'. If Gemini returns commentary containing '{' or '}' outside a JSON block (e.g. LaTeX braces), the parser will produce corrupt JSON and fall through to the raw-text branch. Prefer a strict JSON-only prompt + JSONDecoder.raw_decode fallback."},
+      {"endpoint": "solution_analysis.analyze_solution", "issue": "No token/output cap and no timeout wrapper around _ask. If the model hangs, the FastAPI worker is held for the client's whole HTTP timeout."},
+      {"endpoint": "solution_analysis.SUBJECT_GUIDE", "issue": "Guidance keys are hardcoded subject ids — no fallback for future subjects; unknown subject_id gets the generic message but no metric/log is emitted."},
+      {"endpoint": "GET /api/part2/tasks", "issue": "Does not paginate: `.to_list(200)` — silently truncates once >200 extended_response tasks exist."},
+      {"endpoint": "media_service.normalize_image", "issue": "Loads full image via PIL synchronously in the request path (no run_in_executor). Large JPEGs will block the event loop, hurting concurrency."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Part2 TaskList empty select", "issues": ["Subject <select> uses browser-native styling instead of the shadcn Select used elsewhere in the app — inconsistent look."]},
+      {"screen": "Part2 TaskDetail", "issues": ["Submit button label 'Фили проверяет решение…' persists even for the fast typed-only path where the AI could return in <5s; no progress or streaming indicator (spinner icon)."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_part2_solutions.py",
+    "/app/test_reports/pytest/part2.xml"
+  ],
+  "action_items": [
+    "Add logger.exception around solution_analysis.analyze_solution failures in routes_solution.submit_solution so real Gemini errors are observable.",
+    "Add aggregate upload size guard (sum of file sizes <= MAX_UPLOAD * MAX_IMAGES or a single MAX_TOTAL).",
+    "Skip the second GridFS round-trip: pass the normalized bytes we already have in-memory into the AI call.",
+    "Harden _extract_json (use json.JSONDecoder.raw_decode) so unbalanced braces in feedback don't hide the JSON.",
+    "Wrap _ask in asyncio.wait_for with a sensible timeout (e.g. 45s) and return analysis=None + a friendly message on timeout.",
+    "Move media_service.normalize_image PIL work off the event loop (asyncio.to_thread).",
+    "Paginate /part2/tasks (offset/limit) rather than hardcoding to_list(200)."
+  ],
+  "critical_code_review_comments": [
+    "routes_solution.submit_solution — silent 'except Exception: analysis=None' hides ALL Gemini failures; must at minimum log with logger.exception.",
+    "media_service.store_image reads full image into memory then re-reads via GridFS (get_image_base64) purely to build base64 — dead round-trip.",
+    "solution_analysis._extract_json is a naive brace scan; add strict JSON parsing.",
+    "No rate-limiting on POST /part2/tasks/{id}/submit — each call triggers a paid Gemini vision request; a hostile client could burn tokens fast."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_part2_solutions.py"
+  ],
+  "success_rate": {"backend": "100% (19/19)", "frontend": "100% of Phase-3 flows validated"},
+  "test_credentials": "admin@lightstudy.ru / admin123 (used for UI test; onboarding-skipped). Fresh TEST_qa_* students auto-registered via conftest.",
+  "seed_data_creation": "Reused pre-existing math_prof #13 extended_response task. Test submissions accumulate under TEST_qa_* users (harmless).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Use /app/backend/tests/test_part2_solutions.py as regression. It hits real Gemini (~70s runtime, tokens spent). Handwriting images are generated in-code via PIL+DejaVu; do NOT switch to blank/solid images (see /app/image_testing.md). HEIC test uses pillow_heif; if the writer path becomes unavailable it self-skips. UI test must log in as admin (or a student who has completed onboarding) — a freshly registered student is trapped in /onboarding and cannot reach /app/part2. Two prior real submissions on math_prof #13 exist (0/2 wrong-arithmetic and 2/2 correct) — reuse them for read-only checks.",
+  "rca_of_the_issue": "N/A — no functional bugs. All Phase-3 acceptance criteria met."
+}

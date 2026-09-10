@@ -65,7 +65,34 @@ profile & difficulty update → next task. Real data only (zeros/empty states fo
 - Polish fixes applied to KnowledgeBase.jsx: delete confirmation dialog, delete/poll race guard (removedRef), Russian pluralization (1 фрагмент/страница), data-testid on search subject select.
 - Admin creds: admin@lightstudy.ru / admin123. KB is a TAB in /app/admin, not a route.
 
-### Findings surfaced to user (not yet actioned — need decision)
+## Multimodal upgrade (2026-06) — Phases 1–4 (all tested & passing)
+User choices: **Gemini vision** (gemini-3-flash-preview) via Emergent Universal Key, reuse **GridFS** for images, **HEIC** supported (pillow_heif), preserve existing UI.
+
+### Phase 1 — Image-based tasks + all task types + admin task manager ✅ (iteration_5, 17/17 backend)
+- `media_service.py` (GridFS bucket 'media', normalize/resize/HEIC→JPEG) + `routes_media.py` (`/admin/media/upload`, `/media/upload`, public `GET /media/{id}`).
+- Expanded `questions` schema: images[], all task types (single/multiple/true_false/numeric/text/matching/ordering/table_completion/graph_analysis/diagram_analysis/image_analysis/extended_response), ege_task_number, solution, scoring criteria, source traceability, verified, ai_generated.
+- `grader.py` grades matching/ordering/table_completion/analysis; extended_response is not auto-graded (Part 2 flow).
+- Admin `AdminTasks.jsx` (filters, create/edit/preview/verify/delete, image upload). `QuestionRunner.jsx` renders task images + new types. Extended_response excluded from adaptive practice.
+
+### Phase 2 — Multimodal RAG ✅ (iteration_6, 47/47 backend)
+- `kb_service.py` now uses **pymupdf**: extracts page text + figures, stores figures in GridFS, records `kb_figures` linked by page; `retrieve_multimodal` returns text snippets + figures + base64. Subject-scoped. Figure cleanup on delete/reprocess.
+- `ai_service.py` switched to Gemini vision; `_ask` accepts images (ImageContent). RAG (text+images) wired into `/ai/chat`, `/ai/explain`, `/ai/generate-question`, and in-lesson Fili chat. Responses return `sources`. Verified live: Gemini reads KB figures.
+
+### Phase 3 — Extended-response (Part 2) + handwriting analysis + EGE criteria ✅ (iteration_7, 19/19 backend)
+- `solution_analysis.py` (subject-aware, per-criterion, first-error detection, AI-assisted score, clearly non-official) via Gemini multimodal.
+- `routes_solution.py`: `/part2/tasks`, `/part2/tasks/{id}`, `POST /part2/tasks/{id}/submit` (multipart typed_answer + up to 5 photos, HEIC ok), `/part2/submissions`.
+- `Part2.jsx` page + `nav-part2`: browse tasks, "Загрузить решение" upload, per-criterion analysis view, past attempts.
+
+### Phase 4 — Hybrid dynamic AI task generation ✅ (iteration_8, 9/9 backend)
+- `routes_practice.generate_and_store_tasks`: smart practice generates EGE-level KB-grounded tasks via Gemini, validates, persists to `questions` (ai_generated=true, verified=false) with **source traceability** (doc, page, retrieved context). `start_practice` tops up existing tasks with generated ones (hybrid, cap 5).
+- Practice `smart` toggle ("Добавить задания от ИИ"). Admin sees AI tasks (filter + preview source block). Mastery unchanged (difficulty-weighted, graded-attempts only).
+
+### Known backlog after this upgrade (P1/P2)
+- Scalability: PDF/image processing runs in a BackgroundTask on the event loop (offload via asyncio.to_thread); TF-IDF refit per query + 4000-chunk cap (move to embeddings/vector index for large libraries).
+- CORS wildcard+credentials (restrict to explicit origins for prod).
+- TF-IDF is lexical only — Russian paraphrase recall limited without dense embeddings.
+
+## Earlier findings surfaced to user (KB verification round)
 - **RAG reaches only generate-question**: uploaded textbooks feed `POST /api/ai/generate-question` but NOT the Fili tutor chat / explain-topic. To make textbooks influence the main AI answers, wire `kb_service.retrieve` into those endpoints. (P1)
 - **Scalability**: TF-IDF refit per query, 2000-chunk cap in retrieve(), sync PDF parsing on event loop, one-by-one chunk inserts — fine for demo, will not scale to real 400-page textbooks. (P1)
 - **CORS**: allow_origin_regex='.*' + credentials works only same-host; restrict to explicit origins for prod. (P2)

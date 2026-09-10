@@ -197,14 +197,16 @@ async def lesson_chat(lesson_id: str, body: LessonChatIn, user: dict = Depends(g
     info = C.topic_index().get(l["topic_id"], {})
     k = await db.knowledge.find_one({"user_id": user["id"], "topic_id": l["topic_id"]})
     problem = _lesson_context(l, body.task_index, (prog or {}).get("answers"), info)
+    images = []
     try:
         import kb_service
-        snippets = await kb_service.retrieve(l["subject_id"], f"{info.get('name','')} {body.message}", k=2)
-        material, _ = kb_service.build_rag_context(snippets)
+        mm = await kb_service.retrieve_multimodal(l["subject_id"], f"{info.get('name','')} {body.message}", k=2, max_images=2)
+        material, _ = kb_service.build_rag_context(mm["snippets"], mm["figures"])
+        images = mm["images_b64"]
         if material:
             problem += "\n\n" + material
     except Exception:
-        pass
+        images = []
     context = {
         "name": user.get("name"), "subject_name": info.get("subject_name"),
         "topic_name": info.get("name"), "lesson_title": l.get("title"),
@@ -215,7 +217,7 @@ async def lesson_chat(lesson_id: str, body: LessonChatIn, user: dict = Depends(g
         answer = AI_UNAVAILABLE
     else:
         try:
-            answer = await AIService.generate_answer(conv_id, body.message, context, history[:-1]) or AI_UNAVAILABLE
+            answer = await AIService.generate_answer(conv_id, body.message, context, history[:-1], images=images) or AI_UNAVAILABLE
         except Exception:
             answer = AI_UNAVAILABLE
 

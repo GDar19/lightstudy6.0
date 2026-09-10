@@ -6,7 +6,9 @@ from db import db, clean, clean_list
 from auth_utils import get_current_user, new_id, now_iso
 from ai_service import AIService, ai_available
 import content_data as C
+import logging
 
+logger = logging.getLogger("lightstudy")
 router = APIRouter()
 
 AI_UNAVAILABLE = "ИИ-помощник временно недоступен. Попробуй ещё раз."
@@ -133,11 +135,28 @@ async def chat(body: ChatIn, user: dict = Depends(get_current_user)):
         {"conversation_id": conv_id}).sort("created_at", 1).to_list(20))
     context = await _build_context(user, body.subject_id, body.topic_id, body.lesson_id, body.problem)
 
+    # multimodal RAG: pull relevant textbook text + figures for this subject/topic
+    images, sources = [], []
+    idx = C.topic_index()
+    subj_id = body.subject_id or (idx.get(body.topic_id, {}).get("subject_id") if body.topic_id else None)
+    if subj_id:
+        try:
+            import kb_service
+            topic_name = idx.get(body.topic_id, {}).get("name", "") if body.topic_id else ""
+            mm = await kb_service.retrieve_multimodal(subj_id, f"{topic_name} {body.message}", k=3, max_images=2)
+            material, sources = kb_service.build_rag_context(mm["snippets"], mm["figures"])
+            images = mm["images_b64"]
+            if material:
+                context["problem"] = ((context.get("problem") or "") + "\n\n" + material).strip()
+        except Exception:
+            logger.exception("RAG retrieval failed in /ai/chat")
+            images, sources = [], []
+
     if not ai_available():
         answer = AI_UNAVAILABLE
     else:
         try:
-            answer = await AIService.generate_answer(conv_id, body.message, context, history[:-1])
+            answer = await AIService.generate_answer(conv_id, body.message, context, history[:-1], images=images)
             if not answer:
                 answer = AI_UNAVAILABLE
         except Exception:
@@ -149,7 +168,7 @@ async def chat(body: ChatIn, user: dict = Depends(get_current_user)):
     })
     await db.ai_conversations.update_one({"id": conv_id}, {"$set": {"updated_at": now_iso()}})
 
-    return {"conversation_id": conv_id, "answer": answer, "available": ai_available()}
+    return {"conversation_id": conv_id, "answer": answer, "available": ai_available(), "sources": sources}
 
 
 @router.post("/ai/explain")
@@ -158,20 +177,34 @@ async def explain(body: ExplainIn, user: dict = Depends(get_current_user)):
     idx = C.topic_index()
     topic_name = body.topic_name
     subject_name = body.subject_name
+    subject_id = None
     mastery = None
     if body.topic_id and body.topic_id in idx:
         topic_name = idx[body.topic_id]["name"]
         subject_name = idx[body.topic_id]["subject_name"]
+        subject_id = idx[body.topic_id].get("subject_id")
         k = await db.knowledge.find_one({"user_id": user["id"], "topic_id": body.topic_id})
         mastery = k.get("mastery") if k else None
     if not ai_available():
         return {"answer": AI_UNAVAILABLE, "available": False}
+    material, sources, images = "", [], []
+    if subject_id:
+        try:
+            import kb_service
+            mm = await kb_service.retrieve_multimodal(subject_id, topic_name or subject_name or "", k=3, max_images=2)
+            material, sources = kb_service.build_rag_context(mm["snippets"], mm["figures"])
+            images = mm["images_b64"]
+        except Exception:
+            logger.exception("RAG retrieval failed in /ai/explain")
+            material, sources, images = "", [], []
     try:
         answer = await AIService.explain_topic(new_id(), topic_name or "тема",
-                                               subject_name or "предмет", mastery, body.mode)
-        return {"answer": answer or AI_UNAVAILABLE, "available": True}
+                                               subject_name or "предмет", mastery, body.mode,
+                                               source_material=material, images=images)
+        return {"answer": answer or AI_UNAVAILABLE, "available": True, "sources": sources}
     except Exception:
-        return {"answer": AI_UNAVAILABLE, "available": True}
+        logger.exception("explain_topic failed")
+        return {"answer": AI_UNAVAILABLE, "available": True, "sources": []}
 
 
 @router.post("/ai/generate-question")
@@ -188,15 +221,17 @@ async def generate_question(body: GenQuestionIn, user: dict = Depends(get_curren
     try:
         import kb_service
         subject_id = idx.get(body.topic_id, {}).get("subject_id") if body.topic_id else None
-        snippets = await kb_service.retrieve(subject_id, topic_name or subject_name or "", k=3)
-        material, sources = kb_service.build_rag_context(snippets)
+        mm = await kb_service.retrieve_multimodal(subject_id, topic_name or subject_name or "", k=3, max_images=2)
+        material, sources = kb_service.build_rag_context(mm["snippets"], mm["figures"])
         q = await AIService.generate_question(new_id(), topic_name or "тема",
-                                              subject_name or "предмет", body.difficulty, material)
+                                              subject_name or "предмет", body.difficulty,
+                                              source_material=material, images=mm["images_b64"])
         if not q:
-            return {"question": None, "available": True, "message": "Не удалось сгенерировать задание"}
+            return {"question": None, "available": True, "message": "Не удалось сгенерировать задание", "sources": sources}
         return {"question": q, "available": True, "generated": True, "sources": sources}
     except Exception:
-        return {"question": None, "available": True, "message": AI_UNAVAILABLE}
+        logger.exception("generate_question failed")
+        return {"question": None, "available": True, "message": AI_UNAVAILABLE, "sources": []}
 
 
 @router.post("/ai/analyze-answer")

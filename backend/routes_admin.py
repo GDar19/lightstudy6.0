@@ -19,10 +19,36 @@ class QuestionIn(BaseModel):
     answer: Optional[object] = None
     answer_value: Optional[object] = None
     explanation: str = ""
+    solution: str = ""              # detailed step-by-step solution
     hint: str = ""
     exam_part: Optional[str] = ""
+    ege_task_number: Optional[str] = ""
     tags: List[str] = []
     ege_category: Optional[str] = ""
+    # first-class media: [{media_id, url, caption, kind}]
+    images: List[dict] = []
+    # type-specific payloads
+    answer_format: Optional[str] = "single_choice"   # for graph/diagram/image_analysis
+    match_left: List[str] = []
+    match_right: List[str] = []
+    match_answer: List[int] = []
+    order_items: List[str] = []
+    order_answer: List[int] = []
+    table_headers: List[str] = []
+    table_rows: List[List[str]] = []
+    table_answer: List[str] = []
+    # extended-response (Part 2) scoring criteria
+    scoring: Optional[dict] = None   # {max_score:int, criteria:[{title,description,required,common_errors}]}
+    # traceability
+    source_doc_id: Optional[str] = None
+    source_page: Optional[int] = None
+    source_context: Optional[str] = None
+    verified: bool = False
+    ai_generated: bool = False
+
+
+class VerifyIn(BaseModel):
+    verified: bool
 
 
 class SubjectToggleIn(BaseModel):
@@ -62,9 +88,24 @@ async def admin_users(admin: dict = Depends(require_admin)):
 
 
 @router.get("/admin/questions")
-async def admin_questions(subject_id: Optional[str] = None, admin: dict = Depends(require_admin)):
-    q = {"subject_id": subject_id} if subject_id else {}
-    questions = clean_list(await db.questions.find(q).to_list(1000))
+async def admin_questions(subject_id: Optional[str] = None, topic_id: Optional[str] = None,
+                          qtype: Optional[str] = None, verified: Optional[bool] = None,
+                          ai_generated: Optional[bool] = None, has_images: Optional[bool] = None,
+                          admin: dict = Depends(require_admin)):
+    q = {}
+    if subject_id:
+        q["subject_id"] = subject_id
+    if topic_id:
+        q["topic_id"] = topic_id
+    if qtype:
+        q["type"] = qtype
+    if verified is not None:
+        q["verified"] = verified
+    if ai_generated is not None:
+        q["ai_generated"] = ai_generated
+    if has_images is True:
+        q["images.0"] = {"$exists": True}
+    questions = clean_list(await db.questions.find(q).sort("created_at", -1).to_list(1000))
     return questions
 
 
@@ -83,10 +124,21 @@ async def create_question(body: QuestionIn, admin: dict = Depends(require_admin)
 
 @router.patch("/admin/questions/{qid}")
 async def update_question(qid: str, body: QuestionIn, admin: dict = Depends(require_admin)):
+    from grader import DIFFICULTY_LEVEL
     existing = await db.questions.find_one({"id": qid})
     if not existing:
         raise HTTPException(status_code=404, detail="Вопрос не найден")
-    await db.questions.update_one({"id": qid}, {"$set": body.model_dump()})
+    upd = body.model_dump()
+    upd["difficulty_level"] = DIFFICULTY_LEVEL.get(upd.get("difficulty", "medium"), 3)
+    await db.questions.update_one({"id": qid}, {"$set": upd})
+    return clean(await db.questions.find_one({"id": qid}))
+
+
+@router.patch("/admin/questions/{qid}/verify")
+async def verify_question(qid: str, body: VerifyIn, admin: dict = Depends(require_admin)):
+    res = await db.questions.update_one({"id": qid}, {"$set": {"verified": body.verified}})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Вопрос не найден")
     return clean(await db.questions.find_one({"id": qid}))
 
 

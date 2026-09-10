@@ -6,13 +6,13 @@ import os
 import json
 
 try:
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    from emergentintegrations.llm.chat import LlmChat, UserMessage, ImageContent
     _LIB_OK = True
 except Exception:
     _LIB_OK = False
 
-AI_PROVIDER = os.environ.get("AI_PROVIDER", "anthropic")
-AI_MODEL = os.environ.get("AI_MODEL", "claude-sonnet-4-6")
+AI_PROVIDER = os.environ.get("AI_PROVIDER", "gemini")
+AI_MODEL = os.environ.get("AI_MODEL", "gemini-3-flash-preview")
 
 TUTOR_PERSONA = (
     "Ты — Фили, дружелюбный ИИ-репетитор платформы LightStudy для подготовки к ЕГЭ. "
@@ -39,24 +39,28 @@ def _key() -> str:
     return os.environ.get("EMERGENT_LLM_KEY", "")
 
 
-async def _ask(session_id: str, system_message: str, prompt: str) -> str:
+async def _ask(session_id: str, system_message: str, prompt: str, images: list = None) -> str:
     if not ai_available():
         return None
     chat = LlmChat(api_key=_key(), session_id=session_id, system_message=system_message).with_model(AI_PROVIDER, AI_MODEL)
-    resp = await chat.send_message(UserMessage(text=prompt))
+    file_contents = [ImageContent(image_base64=b) for b in (images or []) if b]
+    msg = UserMessage(text=prompt, file_contents=file_contents) if file_contents else UserMessage(text=prompt)
+    resp = await chat.send_message(msg)
     return resp if isinstance(resp, str) else str(resp)
 
 
 class AIService:
     @staticmethod
-    async def generate_answer(session_id: str, user_text: str, context: dict = None, history: list = None) -> str:
+    async def generate_answer(session_id: str, user_text: str, context: dict = None, history: list = None, images: list = None) -> str:
         ctx = _format_context(context)
         transcript = _format_history(history)
-        prompt = f"{ctx}\n\n{transcript}\nУченик: {user_text}\n\nОтветь как заботливый репетитор."
-        return await _ask(session_id, TUTOR_PERSONA, prompt)
+        img_note = ("\n\nК сообщению приложены изображения (рисунок из задания и/или иллюстрации из учебника). "
+                    "Обязательно посмотри на них и опирайся на то, что на них изображено.") if images else ""
+        prompt = f"{ctx}\n\n{transcript}\nУченик: {user_text}{img_note}\n\nОтветь как заботливый репетитор."
+        return await _ask(session_id, TUTOR_PERSONA, prompt, images)
 
     @staticmethod
-    async def explain_topic(session_id: str, topic_name: str, subject_name: str, mastery: int = None, mode: str = "default") -> str:
+    async def explain_topic(session_id: str, topic_name: str, subject_name: str, mastery: int = None, mode: str = "default", source_material: str = "", images: list = None) -> str:
         mastery_note = f" Текущий уровень ученика по теме: {mastery}%." if mastery is not None else ""
         mode_map = {
             "simple": "Объясни максимально простыми словами и короче.",
@@ -65,24 +69,27 @@ class AIService:
             "summary": "Сделай краткий конспект (5-7 тезисов).",
             "default": "Дай понятное объяснение с одним примером и проверочным вопросом в конце.",
         }
+        material = f"\n\n{source_material}" if source_material else ""
+        img_note = ("\n\nК теме приложены иллюстрации из учебника — используй их в объяснении.") if images else ""
         prompt = (
             f"Тема: «{topic_name}» по предмету «{subject_name}».{mastery_note}\n"
-            f"{mode_map.get(mode, mode_map['default'])}"
+            f"{mode_map.get(mode, mode_map['default'])}{material}{img_note}"
         )
-        return await _ask(session_id, TUTOR_PERSONA, prompt)
+        return await _ask(session_id, TUTOR_PERSONA, prompt, images)
 
     @staticmethod
-    async def generate_question(session_id: str, topic_name: str, subject_name: str, difficulty: str = "medium", source_material: str = "") -> dict:
+    async def generate_question(session_id: str, topic_name: str, subject_name: str, difficulty: str = "medium", source_material: str = "", images: list = None) -> dict:
         material = f"\n\n{source_material}\n" if source_material else ""
+        img_note = ("К материалам приложены иллюстрации из учебника — можешь опираться на них.\n") if images else ""
         prompt = (
             f"Сгенерируй ОДНО тренировочное задание уровня ЕГЭ по теме «{topic_name}» ({subject_name}), "
             f"сложность: {difficulty}. Задание должно соответствовать формату, терминологии и уровню реального ЕГЭ, "
-            f"НЕ быть элементарным или общим, требовать применения знаний (возможно, нескольких шагов).{material}"
+            f"НЕ быть элементарным или общим, требовать применения знаний (возможно, нескольких шагов).{material}{img_note}"
             "Верни СТРОГО валидный JSON без пояснений: "
             '{"question": "...", "options": ["A","B","C","D"], "answer": 0, "explanation": "..."}. '
             "answer — индекс правильного варианта (0-3). Это тренировочное задание, не официальный вопрос ЕГЭ."
         )
-        raw = await _ask(session_id, TUTOR_PERSONA, prompt)
+        raw = await _ask(session_id, TUTOR_PERSONA, prompt, images)
         if not raw:
             return None
         return _extract_json(raw)
