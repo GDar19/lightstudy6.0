@@ -30,9 +30,18 @@ export default function StudyPlan() {
     setPlan((p) => ({ ...p, items: p.items.map((x) => x.id === item.id ? { ...x, status } : x) }));
   };
 
-  const open = (item) => {
-    if (item.activity_type === "lesson") navigate(`/app/topics/${item.topic_id}`);
-    else navigate(`/app/practice?subject=${item.subject_id}&topic=${item.topic_id}`);
+  const open = async (item) => {
+    if (item.activity_type === "lesson") {
+      // Open the real lesson using the existing lesson system, resolved from the item's topic.
+      try {
+        const { data } = await api.topic(item.topic_id);
+        const lesson = (data.lessons || [])[0];
+        if (lesson) { navigate(`/app/lessons/${lesson.id}`); return; }
+      } catch { /* fall through */ }
+      navigate(`/app/topics/${item.topic_id}`);
+      return;
+    }
+    navigate(`/app/practice?subject=${item.subject_id}&topic=${item.topic_id}`);
   };
 
   if (loading) return <Loader full />;
@@ -95,7 +104,9 @@ export default function StudyPlan() {
                       </div>
                     </div>
                     {it.status !== "done" && (
-                      <button onClick={() => open(it)} className="btn-primary text-sm py-2 px-4">Начать</button>
+                      <button onClick={() => open(it)} data-testid={`plan-start-${it.id}`} className="btn-primary text-sm py-2 px-4">
+                        {it.activity_type === "lesson" ? "Начать урок" : "Начать"}
+                      </button>
                     )}
                   </div>
                 ))}
