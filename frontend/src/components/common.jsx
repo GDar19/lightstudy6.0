@@ -33,30 +33,21 @@ export function Wizard({ size = 48, className = "", float = false }) {
   );
 }
 
-// Brand mark — open book with gold "wings" and a gold sparkle star.
+export const LOGO_MARK = "/logo-mark.png";
+export const LOGO_MARK_LIGHT = "/logo-mark-light.png";
+
+// Brand mark — the real LightStudy logo (open book with gold wings + gold star).
 // Distinct from Wizard/Фили (which is strictly the AI-tutor avatar).
 export function LogoMark({ size = 36, className = "", variant = "navy" }) {
-  const book = variant === "light" ? "#F8F5EE" : "#1E2A4A";
-  const gold = "#C9A227";
-  const goldSoft = "#E7D5A2";
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none"
-      className={className} data-testid="logo-mark" aria-hidden="true">
-      {/* sparkle star */}
-      <path d="M24 2.5c.7 3.9 1.9 5.1 5.8 5.8-3.9.7-5.1 1.9-5.8 5.8-.7-3.9-1.9-5.1-5.8-5.8 3.9-.7 5.1-1.9 5.8-5.8z"
-        fill={gold} />
-      <circle cx="34.5" cy="5.5" r="1.1" fill={goldSoft} />
-      <circle cx="14" cy="7" r="0.9" fill={goldSoft} />
-      {/* wings */}
-      <path d="M24 40c-4-7-10.5-10.5-19-11 6.5-3.5 13-2.5 19 3.5" stroke={gold} strokeWidth="2.4"
-        strokeLinecap="round" fill="none" />
-      <path d="M24 40c4-7 10.5-10.5 19-11-6.5-3.5-13-2.5-19 3.5" stroke={gold} strokeWidth="2.4"
-        strokeLinecap="round" fill="none" />
-      {/* open book */}
-      <path d="M24 20.5c-3.4-2.2-7.4-2.6-11-1.4v17c3.6-1.2 7.6-.8 11 1.4 3.4-2.2 7.4-2.6 11-1.4v-17c-3.6-1.2-7.6-.8-11 1.4z"
-        fill={book} />
-      <path d="M24 20.5v17" stroke={gold} strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
+    <img
+      src={variant === "light" ? LOGO_MARK_LIGHT : LOGO_MARK}
+      alt="LightStudy"
+      style={{ height: size, width: "auto" }}
+      className={`object-contain select-none ${className}`}
+      draggable="false"
+      data-testid="logo-mark"
+    />
   );
 }
 
