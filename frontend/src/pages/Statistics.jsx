@@ -7,6 +7,8 @@ import { BarChart3, TrendingUp, CheckCircle2, Flame, Target } from "lucide-react
 import { api } from "@/api/client";
 import { Loader, EmptyState, DonutRing, masteryColor } from "@/components/common";
 
+const SUBJECT_BAR_COLORS = ["#B0862A", "#1E2A4A", "#C9A227", "#2B3A60", "#D4B96A", "#8A6D24", "#47548A"];
+
 function Stat({ icon: Icon, label, value, color }) {
   return (
     <div className="ls-card p-5 flex items-center gap-3" data-testid="stat-card">
@@ -44,7 +46,7 @@ export default function Statistics() {
       ) : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Stat icon={TrendingUp} label="Общий уровень" value={`${stats.overall_mastery}%`} color="#7C66DC" />
+            <Stat icon={TrendingUp} label="Общий уровень" value={`${stats.overall_mastery}%`} color="#B0862A" />
             <Stat icon={Target} label="Точность" value={`${stats.accuracy}%`} color="#3B82F6" />
             <Stat icon={CheckCircle2} label="Заданий решено" value={stats.tasks_completed} color="#10B981" />
             <Stat icon={Flame} label="Серия дней" value={stats.streak} color="#F59E0B" />
@@ -61,7 +63,7 @@ export default function Statistics() {
                     <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "#8A94A6" }} />
                     <Tooltip cursor={{ fill: "#F0EBE1" }} formatter={(v) => [`${v}%`, "Уровень"]} contentStyle={{ borderRadius: 12, border: "1px solid #E5DEC9" }} />
                     <Bar dataKey="mastery" radius={[8, 8, 0, 0]}>
-                      {stats.subject_mastery.map((e, i) => <Cell key={i} fill={e.color || "#7C66DC"} />)}
+                      {stats.subject_mastery.map((e, i) => <Cell key={i} fill={SUBJECT_BAR_COLORS[i % SUBJECT_BAR_COLORS.length]} />)}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -77,7 +79,7 @@ export default function Statistics() {
                     <XAxis dataKey="date" tickFormatter={(d) => d.slice(5)} tick={{ fontSize: 11, fill: "#8A94A6" }} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "#8A94A6" }} />
                     <Tooltip formatter={(v) => [`${v}%`, "Точность"]} labelFormatter={(l) => `Дата: ${l}`} contentStyle={{ borderRadius: 12, border: "1px solid #E5DEC9" }} />
-                    <Line type="monotone" dataKey="accuracy" stroke="#7C66DC" strokeWidth={3} dot={{ r: 4, fill: "#7C66DC" }} />
+                    <Line type="monotone" dataKey="accuracy" stroke="#B0862A" strokeWidth={3} dot={{ r: 4, fill: "#B0862A" }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (

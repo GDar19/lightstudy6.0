@@ -29,7 +29,7 @@ function AnalysisView({ analysis }) {
         <div className="flex items-center gap-2"><Wizard size={28} /><span className="font-display font-semibold text-[#1E2A4A]">Оценка Фили (ИИ, тренировочная)</span></div>
         {total != null && (
           <div className="text-right" data-testid="analysis-score">
-            <div className="font-display text-2xl font-extrabold text-[#7C66DC]">{total}{max != null ? ` / ${max}` : ""}</div>
+            <div className="font-display text-2xl font-extrabold text-[#B0862A]">{total}{max != null ? ` / ${max}` : ""}</div>
             <div className="text-xs text-[#8A94A6]">баллов</div>
           </div>
         )}
@@ -64,7 +64,7 @@ function AnalysisView({ analysis }) {
       {(analysis.missing_parts || []).length > 0 && (
         <div><div className="text-sm font-medium text-[#EF4444] mb-1">Чего не хватает:</div><ul className="list-disc pl-5 text-sm text-[#4B5563] space-y-0.5">{analysis.missing_parts.map((p, i) => <li key={i}>{p}</li>)}</ul></div>
       )}
-      {analysis.feedback && <div className="p-3 rounded-xl bg-[#EEEAFB]"><AIAnswer text={analysis.feedback} /></div>}
+      {analysis.feedback && <div className="p-3 rounded-xl bg-[#F6EFDA]"><AIAnswer text={analysis.feedback} /></div>}
     </div>
   );
 }
@@ -115,7 +115,7 @@ function TaskDetail({ id, onBack }) {
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <DifficultyBadge level={task.difficulty} />
           {task.ege_task_number && <span className="text-xs font-medium bg-[#F0EBE1] px-2 py-0.5 rounded-full text-[#1E2A4A]">№{task.ege_task_number}</span>}
-          {task.exam_part && <span className="text-xs font-medium text-[#7C66DC] bg-[#EEEAFB] px-2 py-0.5 rounded-full">{task.exam_part}</span>}
+          {task.exam_part && <span className="text-xs font-medium text-[#B0862A] bg-[#F6EFDA] px-2 py-0.5 rounded-full">{task.exam_part}</span>}
           <span className="text-xs text-[#8A94A6]">Развёрнутый ответ (часть 2)</span>
         </div>
         <div className="font-display text-lg font-semibold text-[#1E2A4A] whitespace-pre-line leading-relaxed">{task.question}</div>
@@ -144,9 +144,9 @@ function TaskDetail({ id, onBack }) {
         <h3 className="font-display text-lg font-semibold text-[#1E2A4A] mb-3">Ваше решение</h3>
         <textarea value={typed} onChange={(e) => setTyped(e.target.value)} rows={3} data-testid="part2-typed-answer"
           placeholder="Можешь набрать ответ текстом (необязательно, если загружаешь фото)…"
-          className="w-full px-4 py-3 rounded-xl border-2 border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC] mb-3" />
+          className="w-full px-4 py-3 rounded-xl border-2 border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#B0862A] mb-3" />
 
-        <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#EEEAFB] text-[#7C66DC] font-medium cursor-pointer hover:bg-[#E3DCF7] text-sm" data-testid="part2-upload-label">
+        <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#F6EFDA] text-[#B0862A] font-medium cursor-pointer hover:bg-[#E3DCF7] text-sm" data-testid="part2-upload-label">
           <Upload className="w-4 h-4" /> Загрузить решение
           <input type="file" accept="image/*,.heic,.heif" multiple className="hidden" data-testid="part2-file-input"
             onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
@@ -183,7 +183,7 @@ function TaskDetail({ id, onBack }) {
                 <div className="flex items-center gap-2 text-xs text-[#8A94A6] mb-2">
                   <span>{new Date(s.created_at).toLocaleString("ru-RU")}</span>
                   {(s.images || []).length > 0 && <span className="inline-flex items-center gap-1"><ImageIcon className="w-3.5 h-3.5" /> {s.images.length}</span>}
-                  {s.analysis?.total_score != null && <span className="ml-auto font-semibold text-[#7C66DC]">{s.analysis.total_score}/{s.analysis.max_score} б.</span>}
+                  {s.analysis?.total_score != null && <span className="ml-auto font-semibold text-[#B0862A]">{s.analysis.total_score}/{s.analysis.max_score} б.</span>}
                 </div>
                 {(s.images || []).length > 0 && (
                   <div className="flex gap-2 flex-wrap mb-2">
@@ -216,11 +216,11 @@ function TaskList({ onOpen }) {
 
   return (
     <div className="animate-fade-up">
-      <div className="flex items-center gap-2 mb-2"><PenLine className="w-6 h-6 text-[#7C66DC]" /><h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#1E2A4A]">Часть 2 — развёрнутые ответы</h1></div>
+      <div className="flex items-center gap-2 mb-2"><PenLine className="w-6 h-6 text-[#B0862A]" /><h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#1E2A4A]">Часть 2 — развёрнутые ответы</h1></div>
       <p className="text-sm text-[#8A94A6] mb-6">Реши задание, сфотографируй решение из тетради и загрузи — Фили разберёт его по критериям ЕГЭ.</p>
 
       <select value={subject} onChange={(e) => setSubject(e.target.value)} data-testid="part2-subject-select"
-        className="mb-6 w-full max-w-xs px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]">
+        className="mb-6 w-full max-w-xs px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#B0862A]">
         <option value="">Все предметы</option>
         {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
       </select>
@@ -231,7 +231,7 @@ function TaskList({ onOpen }) {
         <div className="space-y-3" data-testid="part2-list">
           {tasks.map((t) => (
             <button key={t.id} onClick={() => onOpen(t.id)} data-testid={`part2-task-${t.id}`}
-              className="w-full text-left ls-card p-5 hover:border-[#C5BCFA] transition-all">
+              className="w-full text-left ls-card p-5 hover:border-[#E7D5A2] transition-all">
               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                 <DifficultyBadge level={t.difficulty} />
                 {t.ege_task_number && <span className="text-xs bg-[#F0EBE1] px-2 py-0.5 rounded-full text-[#1E2A4A]">№{t.ege_task_number}</span>}

@@ -66,8 +66,8 @@ export default function AdminCurriculum({ subjects }) {
         {rows.map((r) => (
           <div key={r.id} className={`ls-card p-3 flex items-center gap-3 ${r.is_active ? "" : "opacity-50"}`} data-testid={`curriculum-row-${r.topic_id}`}>
             <div className="flex flex-col">
-              <button onClick={() => move(r, -1)} className="p-0.5 text-[#7C66DC] hover:bg-[#EEEAFB] rounded"><ChevronUp className="w-4 h-4" /></button>
-              <button onClick={() => move(r, 1)} className="p-0.5 text-[#7C66DC] hover:bg-[#EEEAFB] rounded"><ChevronDown className="w-4 h-4" /></button>
+              <button onClick={() => move(r, -1)} className="p-0.5 text-[#B0862A] hover:bg-[#F6EFDA] rounded"><ChevronUp className="w-4 h-4" /></button>
+              <button onClick={() => move(r, 1)} className="p-0.5 text-[#B0862A] hover:bg-[#F6EFDA] rounded"><ChevronDown className="w-4 h-4" /></button>
             </div>
             <span className="w-8 text-center text-sm font-semibold text-[#8A94A6]">{r.order}</span>
             <input defaultValue={r.title} onBlur={(e) => e.target.value !== r.title && save(r, { title: e.target.value })}

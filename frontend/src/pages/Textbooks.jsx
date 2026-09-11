@@ -38,8 +38,8 @@ export default function Textbooks() {
           {books.map((b) => (
             <button key={b.id} onClick={() => setActive(b)} data-testid={`textbook-${b.id}`}
               className="ls-card p-6 text-left hover:shadow-lg transition-shadow">
-              <div className="w-11 h-11 rounded-xl bg-[#EEEAFB] flex items-center justify-center mb-4">
-                <Library className="w-5 h-5 text-[#7C66DC]" />
+              <div className="w-11 h-11 rounded-xl bg-[#F6EFDA] flex items-center justify-center mb-4">
+                <Library className="w-5 h-5 text-[#B0862A]" />
               </div>
               <h3 className="font-display text-lg font-semibold text-[#1E2A4A]">{b.title}</h3>
               <p className="text-sm text-[#4B5563] mt-1">{b.description}</p>
@@ -50,7 +50,7 @@ export default function Textbooks() {
       ) : (
         <div className="grid lg:grid-cols-[300px,1fr] gap-6">
           <div>
-            <button onClick={() => { setActive(null); setTopic(null); setAiText(""); }} className="text-sm text-[#7C66DC] font-medium mb-3">← Все учебники</button>
+            <button onClick={() => { setActive(null); setTopic(null); setAiText(""); }} className="text-sm text-[#B0862A] font-medium mb-3">← Все учебники</button>
             <div className="ls-card p-5">
               <h3 className="font-display font-semibold text-[#1E2A4A] mb-3">{active.title}</h3>
               <div className="space-y-2">
@@ -58,7 +58,7 @@ export default function Textbooks() {
                   const name = active.topic_names?.[i] || tid;
                   return (
                     <button key={tid} onClick={() => explain({ id: tid, name })} data-testid={`textbook-topic-${tid}`}
-                      className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-2 ${topic?.id === tid ? "bg-[#EEEAFB] text-[#7C66DC]" : "text-[#4B5563] hover:bg-[#F0EBE1]"}`}>
+                      className={`w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center gap-2 ${topic?.id === tid ? "bg-[#F6EFDA] text-[#B0862A]" : "text-[#4B5563] hover:bg-[#F0EBE1]"}`}>
                       <BookOpen className="w-4 h-4 shrink-0" /> {name}
                     </button>
                   );

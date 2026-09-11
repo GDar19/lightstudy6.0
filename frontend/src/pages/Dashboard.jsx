@@ -7,7 +7,7 @@ import {
 import { api } from "@/api/client";
 import { Loader, DonutRing, Wizard, EmptyState, masteryColor, ACTIVITY_LABEL, DifficultyBadge } from "@/components/common";
 
-function StatCard({ icon: Icon, label, value, sub, color = "#7C66DC" }) {
+function StatCard({ icon: Icon, label, value, sub, color = "#B0862A" }) {
   return (
     <div className="ls-card p-5" data-testid="stat-card">
       <div className="flex items-center gap-3">
@@ -50,7 +50,7 @@ export default function Dashboard() {
           <div>
             <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#1E2A4A]" data-testid="dashboard-greeting">Привет, {data.name}!</h1>
             {data.days_until_exam != null ? (
-              <p className="text-[#4B5563]">До ЕГЭ осталось <span className="font-semibold text-[#7C66DC]">{data.days_until_exam}</span> дн.</p>
+              <p className="text-[#4B5563]">До ЕГЭ осталось <span className="font-semibold text-[#B0862A]">{data.days_until_exam}</span> дн.</p>
             ) : (
               <p className="text-[#4B5563]">Продолжаем подготовку 💪</p>
             )}
@@ -63,7 +63,7 @@ export default function Dashboard() {
 
       {!data.has_diagnostics && (
         <div className="ls-card p-6 mb-6 flex flex-col sm:flex-row items-center gap-5 ls-gradient-hero" data-testid="diagnostic-prompt">
-          <Compass className="w-10 h-10 text-[#7C66DC]" />
+          <Compass className="w-10 h-10 text-[#B0862A]" />
           <div className="flex-1 text-center sm:text-left">
             <div className="font-display font-semibold text-lg text-[#1E2A4A]">Пройди диагностику</div>
             <p className="text-sm text-[#4B5563]">Мы определим твой уровень и составим персональный план.</p>
@@ -74,7 +74,7 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard icon={TrendingUp} label="Общий прогресс" value={`${data.overall_progress}%`} color="#7C66DC" />
+        <StatCard icon={TrendingUp} label="Общий прогресс" value={`${data.overall_progress}%`} color="#B0862A" />
         <StatCard icon={CheckCircle2} label="Заданий решено" value={data.tasks_completed} color="#10B981" />
         <StatCard icon={Flame} label="Серия дней" value={data.streak} color="#F59E0B" />
         <StatCard icon={Target} label="Средний результат" value={`${data.accuracy}%`} color="#3B82F6" />
@@ -86,7 +86,7 @@ export default function Dashboard() {
           <div className="ls-card p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-lg font-semibold text-[#1E2A4A]">Сегодня</h2>
-              <Link to="/app/plan" className="text-sm text-[#7C66DC] font-medium hover:underline">Весь план</Link>
+              <Link to="/app/plan" className="text-sm text-[#B0862A] font-medium hover:underline">Весь план</Link>
             </div>
             {data.today_tasks.length === 0 ? (
               <EmptyState icon={Compass} title="Заданий на сегодня нет" description={data.has_diagnostics ? "Создай персональный план, чтобы получить задания на каждый день." : "Пройди диагностику и создай план, чтобы получить задания."} testId="today-empty"
@@ -96,8 +96,8 @@ export default function Dashboard() {
                 {data.today_tasks.map((t) => (
                   <div key={t.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-[#FAF8F3] border border-[#E5DEC9]">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-[#EEEAFB] flex items-center justify-center shrink-0">
-                        <PlayCircle className="w-5 h-5 text-[#7C66DC]" />
+                      <div className="w-10 h-10 rounded-xl bg-[#F6EFDA] flex items-center justify-center shrink-0">
+                        <PlayCircle className="w-5 h-5 text-[#B0862A]" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-[#1E2A4A] truncate">{t.subject_name} · {t.topic_name}</div>
@@ -129,7 +129,7 @@ export default function Dashboard() {
                   <Link key={k.topic_id} to={`/app/topics/${k.topic_id}`} className="flex items-center gap-3 group">
                     <div className="flex-1">
                       <div className="flex justify-between text-sm mb-1">
-                        <span className="text-[#1E2A4A] font-medium group-hover:text-[#7C66DC]">{k.topic_name}</span>
+                        <span className="text-[#1E2A4A] font-medium group-hover:text-[#B0862A]">{k.topic_name}</span>
                         <span className="text-[#8A94A6]">{k.mastery}%</span>
                       </div>
                       <div className="h-2 rounded-full bg-[#EDE6D6] overflow-hidden">
@@ -159,7 +159,7 @@ export default function Dashboard() {
               <div className="space-y-3">
                 {data.subjects.map((s) => (
                   <Link key={s.id} to={`/app/subjects/${s.id}`} className="flex items-center justify-between p-3 rounded-xl hover:bg-[#FAF8F3] group">
-                    <span className="font-medium text-[#1E2A4A] group-hover:text-[#7C66DC]">{s.short}</span>
+                    <span className="font-medium text-[#1E2A4A] group-hover:text-[#B0862A]">{s.short}</span>
                     <span className="text-sm font-semibold" style={{ color: masteryColor(s.mastery) }}>{s.mastery}%</span>
                   </Link>
                 ))}

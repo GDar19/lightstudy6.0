@@ -3,8 +3,19 @@ from datetime import datetime, timezone, date
 from db import db, clean, clean_list
 from auth_utils import get_current_user
 from logic import update_streak
+import content_data as C
 
 router = APIRouter()
+
+
+def _enrich_topic_names(records: list):
+    """Resiliently attach topic_name/subject_name (curriculum knowledge rows may omit them)."""
+    idx = C.topic_index()
+    for k in records:
+        info = idx.get(k.get("topic_id"), {})
+        k["topic_name"] = k.get("topic_name") or info.get("name") or k.get("topic_id")
+        k["subject_name"] = k.get("subject_name") or info.get("subject_name") or k.get("subject_id")
+    return records
 
 
 def _days_until(exam_date: str):
@@ -44,7 +55,8 @@ async def dashboard(user: dict = Depends(get_current_user)):
     today_items = today_items[:5]
 
     # weak topics
-    weak = sorted([k for k in knowledge if k.get("attempts", 0) > 0], key=lambda k: k["mastery"])[:4]
+    weak = _enrich_topic_names(
+        sorted([k for k in knowledge if k.get("attempts", 0) > 0], key=lambda k: k["mastery"])[:4])
 
     subjects = clean_list(await db.subjects.find(
         {"id": {"$in": fresh.get("subjects", [])}}).to_list(50))
@@ -100,6 +112,7 @@ async def statistics(user: dict = Depends(get_current_user)):
         for d, v in sorted(by_day.items())
     ]
 
+    _enrich_topic_names(knowledge)
     topic_mastery = [{"topic": k["topic_name"], "mastery": k["mastery"], "subject": k["subject_name"]}
                      for k in sorted(knowledge, key=lambda x: x["mastery"], reverse=True)]
 

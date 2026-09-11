@@ -135,3 +135,16 @@ User choices: **Gemini vision** (gemini-3-flash-preview) via Emergent Universal 
 - **Contextual, hint-first Фили** (no LaTeX leakage; client-side LaTeX cleanup fallback).
 - Admin: subject enable/disable + question type/hint/exam_part/answer_value editing.
 - Verified: backend 58/58 pytest; frontend flows pass. Fixed post-test bugs: lesson completion status, contextual-Фили double-send (StrictMode), ill-posed parametric question, hint-first behavior + LaTeX rendering.
+
+## Premium UI/UX redesign (2026-06) — visual overhaul ✅ (iteration_11, frontend 100%)
+Reference-driven, VISUAL-ONLY (no backend/logic/curriculum/AI change). User choices: cream+navy+GOLD palette (drop purple), **Playfair Display** serif headings, book+star LightStudy logo, tagline «УЧИСЬ ОСОЗНАННО · ДОСТИГАЙ БОЛЬШЕГО», Фили strictly the AI avatar (never logo/profile).
+- `index.css` rewritten: Playfair Display serif on h1–h4/.font-display + `.font-serif`; gold tokens `--ls-gold #B0862A`, `--ls-gold-soft/pale`; `.btn-accent` = gold field + navy text; gold hero gradient, selection, typing dots, twinkle keyframe.
+- Global purple→gold hex swap across 26 files (`#7C66DC→#B0862A`, `#EEEAFB→#F6EFDA`, lavender/periwinkle→gold soft/pale); active/selected `bg gold + white` → `#C9A227 + navy` for contrast.
+- `common.jsx`: new `LogoMark`/`Logo` SVG (open book + gold sparkle star, navy/light variants); `Wizard` (Fili) unchanged = AI avatar only.
+- `AppLayout.jsx`: all 3 logo spots now use `<Logo>` SVG (mascot-as-logo removed); gold active nav pill; gold user-initial avatar + notif dots.
+- `Landing.jsx`: tagline line under H1, gold step badges. `Statistics.jsx`: subject bar chart now uses on-brand `SUBJECT_BAR_COLORS` (gold/navy) instead of backend `e.color`.
+- Verified (iteration_11): all public + 11 student pages + admin render with new theme, no blank pages, flows (login, lesson, practice, Фили chat, Part 2, admin tabs) work.
+
+## Bug fix (2026-06) — student 500 on /api/subjects & /api/statistics ✅ (self-tested, curl 200)
+Pre-existing crash (KeyError `topic_name`) surfaced during redesign QA: curriculum-seeded `knowledge` rows omit `topic_name`/`subject_name`, crashing `routes_content.list_subjects` and `routes_dashboard.statistics` (broke student Subjects/Statistics/Practice-dropdown/Part2-filter pages). Fix = resilient key access + name resolution via `content_data.topic_index()` (new `_enrich_topic_names` helper in routes_dashboard; guarded `next_topic` in routes_content). No mechanics/logic change. Both endpoints now 200.
+

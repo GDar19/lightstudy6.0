@@ -63,7 +63,7 @@ export default function SubjectDetail() {
                     {t.question_count > 0 && (
                       <button onClick={() => navigate(`/app/practice?subject=${id}&topic=${t.id}`)}
                         data-testid={`practice-topic-${t.id}`}
-                        className="flex-1 text-sm font-medium py-2 rounded-xl bg-[#EEEAFB] text-[#7C66DC] hover:bg-[#E3DCF7] inline-flex items-center justify-center gap-1.5">
+                        className="flex-1 text-sm font-medium py-2 rounded-xl bg-[#F6EFDA] text-[#B0862A] hover:bg-[#E3DCF7] inline-flex items-center justify-center gap-1.5">
                         <Dumbbell className="w-4 h-4" /> Практика
                       </button>
                     )}

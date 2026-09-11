@@ -52,13 +52,19 @@ export default function Landing() {
       <section className="ls-gradient-hero">
         <div className="max-w-6xl mx-auto px-5 pt-16 pb-20 grid lg:grid-cols-2 gap-12 items-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-[#E5DEC9] text-xs font-semibold text-[#7C66DC] mb-6">
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-[#E5DEC9] text-xs font-semibold text-[#B0862A] mb-6">
               <Sparkles className="w-3.5 h-3.5" /> Умная подготовка к ЕГЭ
             </span>
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1E2A4A] leading-[1.1]">
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#1E2A4A] leading-[1.12]">
               Подготовка к ЕГЭ<br />с умным подходом
             </h1>
-            <p className="mt-5 text-lg text-[#4B5563] max-w-md leading-relaxed">
+            <div className="mt-5 flex items-center gap-3">
+              <span className="h-px w-8 bg-[#C9A227]" />
+              <p className="text-xs sm:text-sm font-semibold tracking-[0.18em] uppercase text-[#B0862A]">
+                Учись осознанно · Достигай большего
+              </p>
+            </div>
+            <p className="mt-4 text-lg text-[#4B5563] max-w-md leading-relaxed">
               Индивидуальный план, объяснение тем и постоянная поддержка ИИ-репетитора на пути к результату.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -78,7 +84,7 @@ export default function Landing() {
 
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, delay: 0.15 }} className="flex justify-center">
             <div className="relative">
-              <div className="absolute -inset-8 bg-gradient-to-tr from-[#9B8DF3]/25 to-[#C5BCFA]/10 rounded-full blur-2xl" />
+              <div className="absolute -inset-8 bg-gradient-to-tr from-[#D4B96A]/25 to-[#E7D5A2]/10 rounded-full blur-2xl" />
               <div className="relative ls-card p-8 flex flex-col items-center gap-4 max-w-xs">
                 <Wizard size={140} float />
                 <div className="text-center">
@@ -98,8 +104,8 @@ export default function Landing() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
           {FEATURES.map((f, i) => (
             <motion.div key={f.title} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }} className="ls-card p-6">
-              <div className="w-12 h-12 rounded-2xl bg-[#EEEAFB] flex items-center justify-center mb-4">
-                <f.icon className="w-6 h-6 text-[#7C66DC]" />
+              <div className="w-12 h-12 rounded-2xl bg-[#F6EFDA] flex items-center justify-center mb-4">
+                <f.icon className="w-6 h-6 text-[#B0862A]" />
               </div>
               <h3 className="font-display text-lg font-semibold text-[#1E2A4A]">{f.title}</h3>
               <p className="text-[#4B5563] mt-2 text-sm leading-relaxed">{f.text}</p>
@@ -115,7 +121,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-5 gap-4 mt-10">
             {STEPS.map((s, i) => (
               <motion.div key={s.n} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }} className="bg-white/5 rounded-2xl p-5 border border-white/10">
-                <div className="w-9 h-9 rounded-xl bg-[#7C66DC] text-white font-display font-bold flex items-center justify-center">{s.n}</div>
+                <div className="w-9 h-9 rounded-xl bg-[#C9A227] text-[#182238] font-display font-bold flex items-center justify-center">{s.n}</div>
                 <h3 className="font-display font-semibold text-white mt-4">{s.title}</h3>
                 <p className="text-[#B8C0D0] text-sm mt-1.5">{s.text}</p>
               </motion.div>

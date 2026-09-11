@@ -41,7 +41,7 @@ function Picker({ onStart }) {
       <p className="text-sm text-[#8A94A6] mb-5">Настрой параметры тренировки под подготовку к ЕГЭ.</p>
       <label className="text-sm font-medium text-[#1E2A4A]">Предмет</label>
       <select data-testid="practice-subject-select" value={subject} onChange={(e) => { setSubject(e.target.value); setTopic(""); }}
-        className="mt-1.5 mb-4 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]">
+        className="mt-1.5 mb-4 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#B0862A]">
         <option value="">— выбери —</option>
         {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
       </select>
@@ -49,7 +49,7 @@ function Picker({ onStart }) {
         <>
           <label className="text-sm font-medium text-[#1E2A4A]">Тема</label>
           <select data-testid="practice-topic-select" value={topic} onChange={(e) => setTopic(e.target.value)}
-            className="mt-1.5 mb-4 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]">
+            className="mt-1.5 mb-4 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#B0862A]">
             <option value="">Все темы предмета</option>
             {topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
@@ -57,14 +57,14 @@ function Picker({ onStart }) {
             <div>
               <label className="text-sm font-medium text-[#1E2A4A]">Сложность</label>
               <select data-testid="practice-difficulty-select" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}
-                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]">
+                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#B0862A]">
                 {DIFFS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
               </select>
             </div>
             <div>
               <label className="text-sm font-medium text-[#1E2A4A]">Количество</label>
               <select data-testid="practice-count-select" value={count} onChange={(e) => setCount(+e.target.value)}
-                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]">
+                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#B0862A]">
                 {[5, 10, 20, 30].map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>

@@ -50,7 +50,7 @@ function Running({ exam, onDone }) {
       <div className="flex flex-wrap gap-2 mb-4">
         {exam.questions.map((qq, i) => (
           <button key={qq.id} onClick={() => setIdx(i)} data-testid={`mock-nav-${i}`}
-            className={`w-9 h-9 rounded-lg text-sm font-semibold ${i === idx ? "bg-[#7C66DC] text-white" : answers[qq.id] != null ? "bg-[#EEEAFB] text-[#7C66DC]" : "bg-[#F0EBE1] text-[#8A94A6]"}`}>
+            className={`w-9 h-9 rounded-lg text-sm font-semibold ${i === idx ? "bg-[#C9A227] text-[#1E2A4A]" : answers[qq.id] != null ? "bg-[#F6EFDA] text-[#B0862A]" : "bg-[#F0EBE1] text-[#8A94A6]"}`}>
             {i + 1}
           </button>
         ))}
@@ -73,7 +73,7 @@ function Running({ exam, onDone }) {
                   }
                   return { ...a, [q.id]: i };
                 })} data-testid={`mock-option-${i}`}
-                  className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${picked ? "border-[#7C66DC] bg-[#EEEAFB]" : "border-[#E5DEC9] bg-[#FAF8F3] hover:border-[#C5BCFA]"}`}>
+                  className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${picked ? "border-[#B0862A] bg-[#F6EFDA]" : "border-[#E5DEC9] bg-[#FAF8F3] hover:border-[#E7D5A2]"}`}>
                   <span className="w-8 h-8 shrink-0 rounded-lg bg-white border border-[#E5DEC9] flex items-center justify-center font-semibold text-sm">{LETTERS[i]}</span>
                   <span className="text-[#1E2A4A]">{o}</span>
                 </button>
@@ -82,7 +82,7 @@ function Running({ exam, onDone }) {
           {(q.type === "numeric" || q.type === "text") && (
             <input value={answers[q.id] ?? ""} onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
               data-testid="mock-answer-input" placeholder={q.type === "numeric" ? "Введите число" : "Введите ответ"}
-              className="w-full px-4 py-3 rounded-xl border-2 border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]" />
+              className="w-full px-4 py-3 rounded-xl border-2 border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#B0862A]" />
           )}
         </div>
         <div className="flex items-center justify-between mt-6">
@@ -144,7 +144,7 @@ function Result({ result, onBack }) {
       )}
 
       {result.recommendations?.length > 0 && (
-        <div className="ls-card p-5 mt-5 bg-[#EEEAFB]/40">
+        <div className="ls-card p-5 mt-5 bg-[#F6EFDA]/40">
           <div className="font-semibold text-[#1E2A4A]">Рекомендуем повторить</div>
           <p className="text-sm text-[#4B5563] mt-1">{result.recommendations.join(", ")}</p>
         </div>
@@ -207,7 +207,7 @@ export default function MockExams() {
               <div key={h.id} className="ls-card p-4 flex items-center justify-between">
                 <div><div className="font-medium text-[#1E2A4A]">{h.subject_name}</div>
                   <div className="text-xs text-[#8A94A6]">{new Date(h.finished_at).toLocaleDateString("ru-RU")}</div></div>
-                <div className="text-right"><div className="font-display font-bold text-[#7C66DC]">{h.score} балл</div>
+                <div className="text-right"><div className="font-display font-bold text-[#B0862A]">{h.score} балл</div>
                   <div className="text-xs text-[#8A94A6]">точность {h.accuracy}%</div></div>
               </div>
             ))}

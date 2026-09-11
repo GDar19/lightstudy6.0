@@ -52,18 +52,18 @@ export default function Register() {
             <div>
               <label className="text-sm font-medium text-[#1E2A4A]">Имя</label>
               <input data-testid="register-name" required value={form.name} onChange={upd("name")} placeholder="Как тебя зовут?"
-                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#7C66DC] focus:ring-2 focus:ring-[#7C66DC]/20 outline-none transition" />
+                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#B0862A] focus:ring-2 focus:ring-[#B0862A]/20 outline-none transition" />
             </div>
             <div>
               <label className="text-sm font-medium text-[#1E2A4A]">Email</label>
               <input data-testid="register-email" type="email" required value={form.email} onChange={upd("email")} placeholder="example@mail.com"
-                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#7C66DC] focus:ring-2 focus:ring-[#7C66DC]/20 outline-none transition" />
+                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#B0862A] focus:ring-2 focus:ring-[#B0862A]/20 outline-none transition" />
             </div>
             <div>
               <label className="text-sm font-medium text-[#1E2A4A]">Пароль</label>
               <div className="relative mt-1.5">
                 <input data-testid="register-password" type={show ? "text" : "password"} required value={form.password} onChange={upd("password")} placeholder="Минимум 6 символов"
-                  className="w-full px-4 py-3 pr-11 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#7C66DC] focus:ring-2 focus:ring-[#7C66DC]/20 outline-none transition" />
+                  className="w-full px-4 py-3 pr-11 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#B0862A] focus:ring-2 focus:ring-[#B0862A]/20 outline-none transition" />
                 <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A94A6]">
                   {show ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -72,14 +72,14 @@ export default function Register() {
             <div>
               <label className="text-sm font-medium text-[#1E2A4A]">Подтвердите пароль</label>
               <input data-testid="register-confirm" type={show ? "text" : "password"} required value={form.confirm} onChange={upd("confirm")} placeholder="••••••••"
-                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#7C66DC] focus:ring-2 focus:ring-[#7C66DC]/20 outline-none transition" />
+                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#B0862A] focus:ring-2 focus:ring-[#B0862A]/20 outline-none transition" />
             </div>
             {error && <div data-testid="register-error" className="text-sm text-[#EF4444] bg-[#FEE2E2] px-3 py-2 rounded-lg">{error}</div>}
             <button type="submit" disabled={loading} data-testid="register-submit" className="btn-accent w-full disabled:opacity-60">
               {loading ? "Создаём…" : "Создать аккаунт"}
             </button>
             <p className="text-center text-sm text-[#4B5563]">
-              Уже есть аккаунт? <Link to="/login" className="text-[#7C66DC] font-semibold">Войти</Link>
+              Уже есть аккаунт? <Link to="/login" className="text-[#B0862A] font-semibold">Войти</Link>
             </p>
           </form>
         </div>

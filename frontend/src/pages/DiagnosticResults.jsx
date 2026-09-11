@@ -87,8 +87,8 @@ export default function DiagnosticResults() {
       </div>
 
       {res.recommendations?.length > 0 && (
-        <div className="ls-card p-6 mt-5 flex gap-4 bg-[#EEEAFB]/40">
-          <Sparkles className="w-6 h-6 text-[#7C66DC] shrink-0" />
+        <div className="ls-card p-6 mt-5 flex gap-4 bg-[#F6EFDA]/40">
+          <Sparkles className="w-6 h-6 text-[#B0862A] shrink-0" />
           <div>
             <div className="font-semibold text-[#1E2A4A]">Рекомендации</div>
             <p className="text-sm text-[#4B5563] mt-1">Рекомендуем уделить больше времени темам: {res.recommendations.join(", ")}.</p>

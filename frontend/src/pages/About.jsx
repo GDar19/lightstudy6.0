@@ -33,7 +33,7 @@ export default function About() {
               "ИИ-репетитор Фили помогает с любой темой в любой момент.",
             ].map((t, i) => (
               <li key={i} className="flex gap-3">
-                <span className="w-6 h-6 shrink-0 rounded-lg bg-[#EEEAFB] text-[#7C66DC] text-sm font-bold flex items-center justify-center">{i + 1}</span>
+                <span className="w-6 h-6 shrink-0 rounded-lg bg-[#F6EFDA] text-[#B0862A] text-sm font-bold flex items-center justify-center">{i + 1}</span>
                 {t}
               </li>
             ))}

@@ -51,7 +51,7 @@ export default function Login() {
               <input
                 data-testid="login-email" type="email" required value={email}
                 onChange={(e) => setEmail(e.target.value)} placeholder="example@mail.com"
-                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#7C66DC] focus:ring-2 focus:ring-[#7C66DC]/20 outline-none transition"
+                className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#B0862A] focus:ring-2 focus:ring-[#B0862A]/20 outline-none transition"
               />
             </div>
             <div>
@@ -60,7 +60,7 @@ export default function Login() {
                 <input
                   data-testid="login-password" type={show ? "text" : "password"} required value={password}
                   onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
-                  className="w-full px-4 py-3 pr-11 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#7C66DC] focus:ring-2 focus:ring-[#7C66DC]/20 outline-none transition"
+                  className="w-full px-4 py-3 pr-11 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] focus:border-[#B0862A] focus:ring-2 focus:ring-[#B0862A]/20 outline-none transition"
                 />
                 <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A94A6]">
                   {show ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -72,7 +72,7 @@ export default function Login() {
               {loading ? "Входим…" : "Войти"}
             </button>
             <p className="text-center text-sm text-[#4B5563]">
-              Нет аккаунта? <Link to="/register" className="text-[#7C66DC] font-semibold">Регистрация</Link>
+              Нет аккаунта? <Link to="/register" className="text-[#B0862A] font-semibold">Регистрация</Link>
             </p>
           </form>
         </div>

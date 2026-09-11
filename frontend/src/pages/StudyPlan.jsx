@@ -22,7 +22,7 @@ function CurriculumPanel({ subjectIds }) {
             <div className="text-xs text-[#8A94A6]">{p.topics_mastered}/{p.total_topics} тем · {p.curriculum_progress}%</div>
           </div>
           <div className="h-2 rounded-full bg-[#E5DEC9] overflow-hidden mb-3">
-            <div className="h-full bg-[#7C66DC] transition-all" style={{ width: `${p.curriculum_progress}%` }} />
+            <div className="h-full bg-[#B0862A] transition-all" style={{ width: `${p.curriculum_progress}%` }} />
           </div>
           {p.curriculum_completed ? (
             <div className="text-sm text-[#10B981] inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Программа пройдена!</div>
@@ -115,7 +115,7 @@ export default function StudyPlan() {
           <p className="text-[#4B5563] mt-1">Выполнено {doneCount} из {plan.items.length} заданий</p>
         </div>
         <button onClick={generate} disabled={regen} data-testid="regenerate-plan-btn"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium border border-[#7C66DC]/30 text-[#7C66DC] hover:bg-[#EEEAFB] self-start">
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium border border-[#B0862A]/30 text-[#B0862A] hover:bg-[#F6EFDA] self-start">
           <RefreshCw className={`w-4 h-4 ${regen ? "animate-spin" : ""}`} /> Обновить план
         </button>
       </div>
@@ -129,7 +129,7 @@ export default function StudyPlan() {
           return (
             <div key={date}>
               <div className="flex items-center gap-2 mb-3">
-                <CalendarDays className="w-4 h-4 text-[#7C66DC]" />
+                <CalendarDays className="w-4 h-4 text-[#B0862A]" />
                 <span className="font-display font-semibold text-[#1E2A4A]">{label}</span>
                 <span className="text-sm text-[#8A94A6]">{d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}</span>
               </div>
@@ -139,7 +139,7 @@ export default function StudyPlan() {
                     <button onClick={() => toggle(it)} data-testid={`plan-toggle-${it.id}`} className="shrink-0">
                       {it.status === "done"
                         ? <div className="w-6 h-6 rounded-full bg-[#10B981] flex items-center justify-center"><Check className="w-4 h-4 text-white" /></div>
-                        : <Circle className="w-6 h-6 text-[#C5BCFA]" />}
+                        : <Circle className="w-6 h-6 text-[#E7D5A2]" />}
                     </button>
                     <div className="flex-1 min-w-0">
                       <div className={`font-medium text-[#1E2A4A] ${it.status === "done" ? "line-through" : ""}`}>{it.subject_name} · {it.topic_name}</div>

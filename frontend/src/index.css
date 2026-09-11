@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,11 +10,12 @@
   --ls-sidebar: #182238;
   --ls-navy: #1E2A4A;
   --ls-navy-2: #2B3A60;
-  --ls-purple: #7C66DC;
-  --ls-purple-2: #6853C8;
-  --ls-lavender: #9B8DF3;
-  --ls-periwinkle: #C5BCFA;
+  --ls-gold: #B0862A;
+  --ls-gold-2: #977224;
+  --ls-gold-soft: #D4B96A;
+  --ls-gold-pale: #E7D5A2;
   --ls-cream-accent: #F0EBE1;
+  --ls-gold-tint: #F6EFDA;
   --ls-border: #E5DEC9;
   --ls-text: #1E2A4A;
   --ls-text-2: #4B5563;
@@ -32,13 +33,13 @@
   --secondary-foreground: 222 42% 20%;
   --muted: 40 33% 91%;
   --muted-foreground: 218 12% 60%;
-  --accent: 251 62% 63%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 41 62% 43%;
+  --accent-foreground: 222 42% 20%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
   --border: 45 42% 84%;
   --input: 45 42% 84%;
-  --ring: 251 62% 63%;
+  --ring: 41 62% 43%;
   --radius: 0.9rem;
 }
 
@@ -53,15 +54,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, .font-display {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+h1, h2, h3, h4, .font-display, .font-serif {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  letter-spacing: -0.01em;
 }
 
+.font-sans { font-family: 'Inter', system-ui, sans-serif; }
 .font-mono, code, .katex-like {
   font-family: 'JetBrains Mono', monospace;
 }
 
-::selection { background: var(--ls-periwinkle); color: var(--ls-navy); }
+::selection { background: var(--ls-gold-pale); color: var(--ls-navy); }
 
 /* scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -71,15 +74,21 @@ h1, h2, h3, h4, .font-display {
 
 .ls-card {
   background: var(--ls-card);
-  border: 1px solid rgba(30,42,74,0.06);
+  border: 1px solid rgba(30,42,74,0.07);
   border-radius: 1.25rem;
   box-shadow: 0 4px 24px rgba(30,42,74,0.05);
 }
 
 .ls-gradient-hero {
   background:
-    radial-gradient(1200px 500px at 80% -10%, rgba(155,141,243,0.18), transparent 60%),
-    radial-gradient(800px 400px at 10% 10%, rgba(197,188,250,0.15), transparent 60%);
+    radial-gradient(1200px 520px at 82% -12%, rgba(176,134,42,0.14), transparent 60%),
+    radial-gradient(760px 420px at 8% 8%, rgba(231,213,162,0.30), transparent 62%);
+}
+
+/* thin gold hairline accent */
+.ls-gold-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ls-gold), transparent);
 }
 
 .btn-primary {
@@ -89,11 +98,14 @@ h1, h2, h3, h4, .font-display {
 .btn-primary:hover { background: var(--ls-navy-2); }
 .btn-primary:active { transform: scale(0.98); }
 
+/* gold accent CTA — gold field with navy text (premium, high-contrast) */
 .btn-accent {
-  background: var(--ls-purple); color: #fff; border-radius: 0.9rem;
-  padding: 0.7rem 1.4rem; font-weight: 600; transition: transform .12s ease, background-color .2s ease;
+  background: var(--ls-gold); color: var(--ls-navy); border-radius: 0.9rem;
+  padding: 0.7rem 1.4rem; font-weight: 700; letter-spacing: .01em;
+  box-shadow: 0 6px 18px rgba(176,134,42,0.22);
+  transition: transform .12s ease, background-color .2s ease, box-shadow .2s ease;
 }
-.btn-accent:hover { background: var(--ls-purple-2); }
+.btn-accent:hover { background: var(--ls-gold-2); color: #fff; box-shadow: 0 8px 22px rgba(151,114,36,0.28); }
 .btn-accent:active { transform: scale(0.98); }
 
 @keyframes ls-fade-up {
@@ -108,8 +120,14 @@ h1, h2, h3, h4, .font-display {
 }
 .animate-float { animation: ls-float 4s ease-in-out infinite; }
 
+@keyframes ls-twinkle {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .5; transform: scale(.82); }
+}
+.animate-twinkle { animation: ls-twinkle 2.6s ease-in-out infinite; }
+
 .typing-dot {
-  width: 7px; height: 7px; border-radius: 50%; background: var(--ls-lavender);
+  width: 7px; height: 7px; border-radius: 50%; background: var(--ls-gold);
   display: inline-block; animation: ls-blink 1.2s infinite both;
 }
 .typing-dot:nth-child(2) { animation-delay: .2s; }

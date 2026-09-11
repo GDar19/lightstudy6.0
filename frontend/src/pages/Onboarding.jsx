@@ -63,7 +63,7 @@ export default function Onboarding() {
         {/* progress */}
         <div className="flex items-center gap-2 mb-8">
           {[1, 2, 3, 4].map((s) => (
-            <div key={s} className={`h-1.5 rounded-full flex-1 transition-colors ${s <= step ? "bg-[#7C66DC]" : "bg-[#E5DEC9]"}`} />
+            <div key={s} className={`h-1.5 rounded-full flex-1 transition-colors ${s <= step ? "bg-[#B0862A]" : "bg-[#E5DEC9]"}`} />
           ))}
         </div>
 
@@ -80,7 +80,7 @@ export default function Onboarding() {
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                 {[1, 2, 3, 4, 5, 6].map((n) => (
                   <button key={n} data-testid={`count-${n}`} onClick={() => setCount(n)}
-                    className={`aspect-square rounded-2xl font-display text-2xl font-bold transition-all ${count === n ? "bg-[#7C66DC] text-white shadow-md scale-105" : "bg-[#F0EBE1] text-[#1E2A4A] hover:bg-[#E2DACB]"}`}>
+                    className={`aspect-square rounded-2xl font-display text-2xl font-bold transition-all ${count === n ? "bg-[#C9A227] text-[#1E2A4A] shadow-md scale-105" : "bg-[#F0EBE1] text-[#1E2A4A] hover:bg-[#E2DACB]"}`}>
                     {n}
                   </button>
                 ))}
@@ -97,8 +97,8 @@ export default function Onboarding() {
                   const active = selected.includes(s.id);
                   return (
                     <button key={s.id} data-testid={`subject-select-${s.id}`} onClick={() => toggle(s.id)}
-                      className={`flex items-center gap-3 p-4 rounded-2xl border-2 text-left transition-all ${active ? "border-[#7C66DC] bg-[#EEEAFB]" : "border-[#E5DEC9] bg-[#FAF8F3] hover:border-[#C5BCFA]"}`}>
-                      <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background: active ? "#7C66DC" : "#E5DEC9" }}>
+                      className={`flex items-center gap-3 p-4 rounded-2xl border-2 text-left transition-all ${active ? "border-[#B0862A] bg-[#F6EFDA]" : "border-[#E5DEC9] bg-[#FAF8F3] hover:border-[#E7D5A2]"}`}>
+                      <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background: active ? "#B0862A" : "#E5DEC9" }}>
                         {active && <Check className="w-3.5 h-3.5 text-white" />}
                       </div>
                       <span className="font-medium text-[#1E2A4A]">{s.name}</span>
@@ -113,26 +113,26 @@ export default function Onboarding() {
             <div className="space-y-6">
               <h1 className="font-display text-2xl font-extrabold text-[#1E2A4A]">Расскажи о своих целях</h1>
               <div>
-                <label className="text-sm font-medium text-[#1E2A4A]">Целевой балл: <span className="text-[#7C66DC] font-bold">{targetScore}</span></label>
+                <label className="text-sm font-medium text-[#1E2A4A]">Целевой балл: <span className="text-[#B0862A] font-bold">{targetScore}</span></label>
                 <input data-testid="target-score" type="range" min="40" max="100" value={targetScore} onChange={(e) => setTargetScore(+e.target.value)}
-                  className="w-full mt-2 accent-[#7C66DC]" />
+                  className="w-full mt-2 accent-[#B0862A]" />
               </div>
               <div>
                 <label className="text-sm font-medium text-[#1E2A4A]">Дата экзамена</label>
                 <input data-testid="exam-date" type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)}
-                  className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]" />
+                  className="mt-1.5 w-full px-4 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#B0862A]" />
               </div>
               <div>
-                <label className="text-sm font-medium text-[#1E2A4A]">Время на учёбу в день: <span className="text-[#7C66DC] font-bold">{dailyMinutes} мин</span></label>
+                <label className="text-sm font-medium text-[#1E2A4A]">Время на учёбу в день: <span className="text-[#B0862A] font-bold">{dailyMinutes} мин</span></label>
                 <input data-testid="daily-minutes" type="range" min="15" max="240" step="15" value={dailyMinutes} onChange={(e) => setDailyMinutes(+e.target.value)}
-                  className="w-full mt-2 accent-[#7C66DC]" />
+                  className="w-full mt-2 accent-[#B0862A]" />
               </div>
               <div>
                 <label className="text-sm font-medium text-[#1E2A4A]">Насколько ты уверен в знаниях?</label>
                 <div className="grid grid-cols-3 gap-3 mt-2">
                   {CONFIDENCE.map((c) => (
                     <button key={c.v} data-testid={`confidence-${c.v}`} onClick={() => setConfidence(c.v)}
-                      className={`px-3 py-3 rounded-xl text-sm font-medium transition-all ${confidence === c.v ? "bg-[#7C66DC] text-white" : "bg-[#F0EBE1] text-[#1E2A4A] hover:bg-[#E2DACB]"}`}>
+                      className={`px-3 py-3 rounded-xl text-sm font-medium transition-all ${confidence === c.v ? "bg-[#C9A227] text-[#1E2A4A]" : "bg-[#F0EBE1] text-[#1E2A4A] hover:bg-[#E2DACB]"}`}>
                       {c.label}
                     </button>
                   ))}

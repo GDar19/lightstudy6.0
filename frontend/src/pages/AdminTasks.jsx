@@ -91,7 +91,7 @@ export default function AdminTasks({ subjects, topics }) {
           <StatBox label="Черновики" value={stats.draft} color="#8A94A6" />
           <StatBox label="На проверке" value={stats.verification} color="#F59E0B" />
           <StatBox label="В архиве" value={stats.archived} color="#EF4444" />
-          <StatBox label="С картинками" value={stats.with_images} color="#7C66DC" />
+          <StatBox label="С картинками" value={stats.with_images} color="#B0862A" />
         </div>
       )}
 
@@ -149,7 +149,7 @@ export default function AdminTasks({ subjects, topics }) {
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ color: st[1], background: st[2] }} data-testid={`task-status-${q.id}`}>{st[0]}</span>
                   <DifficultyBadge level={q.difficulty} />
-                  <span className="text-xs font-medium text-[#7C66DC] bg-[#EEEAFB] px-2 py-0.5 rounded-full">{TYPE_LABELS[q.type] || q.type}</span>
+                  <span className="text-xs font-medium text-[#B0862A] bg-[#F6EFDA] px-2 py-0.5 rounded-full">{TYPE_LABELS[q.type] || q.type}</span>
                   {q.exam_part && <span className="text-xs bg-[#F0EBE1] px-2 py-0.5 rounded-full text-[#1E2A4A]">{q.exam_part}</span>}
                   {q.ege_task_number && <span className="text-xs bg-[#F0EBE1] px-2 py-0.5 rounded-full text-[#1E2A4A]">№{q.ege_task_number}</span>}
                   {(q.images || []).length > 0 && <span className="text-xs inline-flex items-center gap-1 text-[#8A94A6]"><ImageIcon className="w-3.5 h-3.5" /> {q.images.length}</span>}
@@ -166,7 +166,7 @@ export default function AdminTasks({ subjects, topics }) {
               <div className="flex items-center gap-1 shrink-0">
                 {q.status !== "published" && <button onClick={() => changeStatus(q, "published")} data-testid={`task-publish-${q.id}`} className="p-2 rounded-lg text-[#10B981] hover:bg-[#ECFDF5]" title="Опубликовать"><Send className="w-4 h-4" /></button>}
                 {q.status !== "archived" && <button onClick={() => changeStatus(q, "archived")} data-testid={`task-archive-${q.id}`} className="p-2 rounded-lg text-[#F59E0B] hover:bg-[#FEF3C7]" title="В архив"><Archive className="w-4 h-4" /></button>}
-                <button onClick={() => setPreview(q)} data-testid={`task-preview-${q.id}`} className="p-2 rounded-lg text-[#7C66DC] hover:bg-[#EEEAFB]" title="Предпросмотр"><Eye className="w-4 h-4" /></button>
+                <button onClick={() => setPreview(q)} data-testid={`task-preview-${q.id}`} className="p-2 rounded-lg text-[#B0862A] hover:bg-[#F6EFDA]" title="Предпросмотр"><Eye className="w-4 h-4" /></button>
                 <button onClick={() => setEditing({ ...EMPTY, ...q, scoring: q.scoring || { max_score: 2, criteria: [] } })} data-testid={`task-edit-${q.id}`} className="p-2 rounded-lg text-[#1E2A4A] hover:bg-[#F0EBE1]" title="Редактировать"><Pencil className="w-4 h-4" /></button>
                 <button onClick={() => duplicate(q)} data-testid={`task-duplicate-${q.id}`} className="p-2 rounded-lg text-[#1E2A4A] hover:bg-[#F0EBE1]" title="Дублировать"><Copy className="w-4 h-4" /></button>
                 <button onClick={() => del(q.id)} data-testid={`admin-delete-${q.id}`} className="p-2 rounded-lg text-[#EF4444] hover:bg-[#FEE2E2]"><Trash2 className="w-4 h-4" /></button>
@@ -269,7 +269,7 @@ function TaskEditor({ form, setForm, subjects, topics, onClose, onSaved }) {
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="text-sm font-medium text-[#1E2A4A]">Изображения / диаграммы / графики</label>
-            <label className="inline-flex items-center gap-1.5 text-sm text-[#7C66DC] cursor-pointer hover:underline" data-testid="edit-image-upload-label">
+            <label className="inline-flex items-center gap-1.5 text-sm text-[#B0862A] cursor-pointer hover:underline" data-testid="edit-image-upload-label">
               <Upload className="w-4 h-4" /> {uploading ? "Загрузка…" : "Загрузить"}
               <input type="file" accept="image/*" className="hidden" data-testid="edit-image-input"
                 onChange={(e) => { uploadImage(e.target.files[0]); e.target.value = ""; }} />
@@ -307,16 +307,16 @@ function TaskEditor({ form, setForm, subjects, topics, onClose, onSaved }) {
               <div key={i} className="flex items-center gap-2">
                 {effFormat === "multiple_choice" ? (
                   <input type="checkbox" checked={Array.isArray(form.answer) && form.answer.includes(i)} data-testid={`edit-correct-${i}`}
-                    onChange={() => { const a = Array.isArray(form.answer) ? form.answer : []; set({ answer: a.includes(i) ? a.filter((x) => x !== i) : [...a, i] }); }} className="accent-[#7C66DC]" />
+                    onChange={() => { const a = Array.isArray(form.answer) ? form.answer : []; set({ answer: a.includes(i) ? a.filter((x) => x !== i) : [...a, i] }); }} className="accent-[#B0862A]" />
                 ) : (
-                  <input type="radio" checked={form.answer === i} onChange={() => set({ answer: i })} data-testid={`edit-correct-${i}`} className="accent-[#7C66DC]" />
+                  <input type="radio" checked={form.answer === i} onChange={() => set({ answer: i })} data-testid={`edit-correct-${i}`} className="accent-[#B0862A]" />
                 )}
                 <input placeholder={`Вариант ${i + 1}`} value={o} onChange={(e) => { const opts = [...form.options]; opts[i] = e.target.value; set({ options: opts }); }}
                   className="flex-1 px-3 py-2 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]" data-testid={`edit-option-${i}`} />
                 <button onClick={() => set({ options: form.options.filter((_, j) => j !== i) })} className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded"><X className="w-4 h-4" /></button>
               </div>
             ))}
-            <button onClick={() => set({ options: [...form.options, ""] })} className="text-sm text-[#7C66DC] hover:underline">+ Добавить вариант</button>
+            <button onClick={() => set({ options: [...form.options, ""] })} className="text-sm text-[#B0862A] hover:underline">+ Добавить вариант</button>
           </div>
         )}
 
@@ -388,7 +388,7 @@ function TaskEditor({ form, setForm, subjects, topics, onClose, onSaved }) {
                 <textarea placeholder="Описание / что требуется" value={c.description || ""} onChange={(e) => { const cr = [...form.scoring.criteria]; cr[i] = { ...cr[i], description: e.target.value }; set({ scoring: { ...form.scoring, criteria: cr } }); }} rows={2} className="w-full px-2 py-1.5 rounded-lg border border-[#E5DEC9] text-sm" />
               </div>
             ))}
-            <button onClick={() => set({ scoring: { ...form.scoring, criteria: [...(form.scoring?.criteria || []), { title: "", description: "", max: 1 }] } })} data-testid="edit-add-criterion" className="text-sm text-[#7C66DC] hover:underline">+ Добавить критерий</button>
+            <button onClick={() => set({ scoring: { ...form.scoring, criteria: [...(form.scoring?.criteria || []), { title: "", description: "", max: 1 }] } })} data-testid="edit-add-criterion" className="text-sm text-[#B0862A] hover:underline">+ Добавить критерий</button>
           </div>
         )}
 
@@ -424,7 +424,7 @@ function TaskPreview({ q, onClose }) {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <DifficultyBadge level={q.difficulty} />
-          <span className="text-xs text-[#7C66DC] bg-[#EEEAFB] px-2 py-0.5 rounded-full">{TYPE_LABELS[q.type] || q.type}</span>
+          <span className="text-xs text-[#B0862A] bg-[#F6EFDA] px-2 py-0.5 rounded-full">{TYPE_LABELS[q.type] || q.type}</span>
         </div>
         <div className="font-medium text-[#1E2A4A] whitespace-pre-line">{q.question}</div>
         {(q.images || []).map((img, i) => (

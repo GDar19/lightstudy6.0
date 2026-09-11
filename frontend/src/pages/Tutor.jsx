@@ -100,7 +100,7 @@ export default function Tutor() {
             {convos.length === 0 && <p className="text-sm text-[#8A94A6] px-2">История пуста</p>}
             {convos.map((c) => (
               <button key={c.id} onClick={() => openConvo(c.id)} data-testid={`convo-${c.id}`}
-                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm truncate flex items-center gap-2 ${convId === c.id ? "bg-[#EEEAFB] text-[#7C66DC]" : "text-[#4B5563] hover:bg-[#F0EBE1]"}`}>
+                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm truncate flex items-center gap-2 ${convId === c.id ? "bg-[#F6EFDA] text-[#B0862A]" : "text-[#4B5563] hover:bg-[#F0EBE1]"}`}>
                 <MessageSquare className="w-4 h-4 shrink-0" /> {c.title}
               </button>
             ))}
@@ -133,7 +133,7 @@ export default function Tutor() {
             {messages.map((m) => (
               <div key={m.id} className={`flex gap-2.5 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
                 {m.role === "assistant" && <Wizard size={32} className="shrink-0 mt-1" />}
-                <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl ${m.role === "user" ? "bg-[#7C66DC] text-white rounded-tr-sm" : "bg-[#FAF8F3] border border-[#E5DEC9] rounded-tl-sm"}`}>
+                <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl ${m.role === "user" ? "bg-[#C9A227] text-[#1E2A4A] rounded-tr-sm" : "bg-[#FAF8F3] border border-[#E5DEC9] rounded-tl-sm"}`}>
                   {m.role === "user" ? <span className="whitespace-pre-wrap">{m.content}</span> : <AIAnswer text={m.content} />}
                 </div>
               </div>
@@ -153,7 +153,7 @@ export default function Tutor() {
             {QUICK.map((q) => (
               <button key={q.label} onClick={() => send(q.text)} disabled={sending}
                 data-testid={`quick-${q.label}`}
-                className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-full bg-[#EEEAFB] text-[#7C66DC] hover:bg-[#E3DCF7] disabled:opacity-50">
+                className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-full bg-[#F6EFDA] text-[#B0862A] hover:bg-[#E3DCF7] disabled:opacity-50">
                 {q.label}
               </button>
             ))}
@@ -165,7 +165,7 @@ export default function Tutor() {
               value={input} onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
               placeholder="Введите ваш вопрос…" rows={1} data-testid="chat-input"
-              className="flex-1 resize-none px-4 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC] max-h-32"
+              className="flex-1 resize-none px-4 py-2.5 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#B0862A] max-h-32"
             />
             <button onClick={() => send()} disabled={sending || !input.trim()} data-testid="chat-send-btn"
               className="btn-accent p-3 rounded-xl disabled:opacity-50">

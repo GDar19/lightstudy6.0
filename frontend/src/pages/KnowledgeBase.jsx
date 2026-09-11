@@ -102,13 +102,13 @@ export default function KnowledgeBase({ subjects }) {
               const st = STATUS[d.status] || STATUS.processing;
               return (
                 <div key={d.id} className="ls-card p-4 flex items-center gap-4" data-testid={`kb-doc-${d.id}`}>
-                  <FileText className="w-8 h-8 text-[#7C66DC] shrink-0" />
+                  <FileText className="w-8 h-8 text-[#B0862A] shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-[#1E2A4A] truncate">{d.title}</div>
                     <div className="text-xs text-[#8A94A6]">{d.filename} · {DOC_TYPES.find((t) => t[0] === d.doc_type)?.[1]} {d.status === "indexed" && `· ${d.pages} ${plural(d.pages, ["стр", "стр", "стр"])} · ${d.chunks} ${plural(d.chunks, ["фрагмент", "фрагмента", "фрагментов"])}${d.figures ? ` · ${d.figures} ${plural(d.figures, ["рисунок", "рисунка", "рисунков"])}` : ""}`}{d.error && ` · ${d.error}`}</div>
                   </div>
                   <span className="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0" style={{ color: st[1], background: st[2] }} data-testid={`kb-status-${d.id}`}>{st[0]}</span>
-                  <button onClick={() => reprocess(d.id)} data-testid={`kb-reprocess-${d.id}`} className="p-2 rounded-lg text-[#7C66DC] hover:bg-[#EEEAFB]" title="Переиндексировать"><RefreshCw className="w-4 h-4" /></button>
+                  <button onClick={() => reprocess(d.id)} data-testid={`kb-reprocess-${d.id}`} className="p-2 rounded-lg text-[#B0862A] hover:bg-[#F6EFDA]" title="Переиндексировать"><RefreshCw className="w-4 h-4" /></button>
                   <button onClick={() => del(d.id)} data-testid={`kb-delete-${d.id}`} className="p-2 rounded-lg text-[#EF4444] hover:bg-[#FEE2E2]"><Trash2 className="w-4 h-4" /></button>
                 </div>
               );
@@ -134,7 +134,7 @@ export default function KnowledgeBase({ subjects }) {
             {results.length === 0 ? <p className="text-sm text-[#8A94A6]">Ничего не найдено. Загрузи и проиндексируй документ.</p> :
               results.map((r, i) => (
                 <div key={i} className="p-3 rounded-xl bg-[#FAF8F3] border border-[#E5DEC9] text-sm">
-                  <div className="text-xs text-[#7C66DC] font-medium mb-1">{r.doc_title} · стр. {r.page} · релевантность {r.score}</div>
+                  <div className="text-xs text-[#B0862A] font-medium mb-1">{r.doc_title} · стр. {r.page} · релевантность {r.score}</div>
                   <div className="text-[#4B5563]">{r.text.slice(0, 240)}…</div>
                 </div>
               ))}

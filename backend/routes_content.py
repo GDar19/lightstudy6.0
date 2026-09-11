@@ -29,8 +29,11 @@ async def list_subjects(user: dict = Depends(get_current_user)):
         # next recommended topic: lowest mastery among subject topics
         s["topic_count"] = sum(len(sec["topics"]) for sec in s["sections"])
         weak = sorted(ks, key=lambda x: x["mastery"])
-        s["next_topic"] = weak[0]["topic_name"] if weak else (
-            s["sections"][0]["topics"][0]["name"] if s["sections"] else None)
+        if weak:
+            _tname = weak[0].get("topic_name") or C.topic_index().get(weak[0].get("topic_id"), {}).get("name")
+            s["next_topic"] = _tname or (s["sections"][0]["topics"][0]["name"] if s["sections"] else None)
+        else:
+            s["next_topic"] = s["sections"][0]["topics"][0]["name"] if s["sections"] else None
     return subjects
 
 

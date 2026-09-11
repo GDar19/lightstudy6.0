@@ -92,7 +92,7 @@ export default function QuestionRunner({ questions, onAnswer, onFinish, title, s
       return "border-[#E5DEC9] bg-[#FAF8F3] opacity-60";
     }
     const picked = effType === "multiple_choice" ? multi.includes(i) : selected === i;
-    return picked ? "border-[#7C66DC] bg-[#EEEAFB]" : "border-[#E5DEC9] bg-[#FAF8F3] hover:border-[#C5BCFA]";
+    return picked ? "border-[#B0862A] bg-[#F6EFDA]" : "border-[#E5DEC9] bg-[#FAF8F3] hover:border-[#E7D5A2]";
   };
 
   return (
@@ -106,14 +106,14 @@ export default function QuestionRunner({ questions, onAnswer, onFinish, title, s
       </div>
 
       <div className="h-1.5 rounded-full bg-[#E5DEC9] mb-6 overflow-hidden">
-        <div className="h-full bg-[#7C66DC] transition-all duration-500" style={{ width: `${((idx + (feedback ? 1 : 0)) / questions.length) * 100}%` }} />
+        <div className="h-full bg-[#B0862A] transition-all duration-500" style={{ width: `${((idx + (feedback ? 1 : 0)) / questions.length) * 100}%` }} />
       </div>
 
       <div className="ls-card p-6 sm:p-7" data-testid="question-card">
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <DifficultyBadge level={q.difficulty} />
           {q.ege_task_number && <span className="text-xs font-medium text-[#1E2A4A] bg-[#F0EBE1] px-2 py-0.5 rounded-full">№{q.ege_task_number}</span>}
-          {q.exam_part && <span className="text-xs font-medium text-[#7C66DC] bg-[#EEEAFB] px-2 py-0.5 rounded-full">{q.exam_part}</span>}
+          {q.exam_part && <span className="text-xs font-medium text-[#B0862A] bg-[#F6EFDA] px-2 py-0.5 rounded-full">{q.exam_part}</span>}
           {q.ege_category && <span className="text-xs text-[#8A94A6]">{q.ege_category}</span>}
           {effType === "multiple_choice" && <span className="text-xs text-[#8A94A6]">(выберите все верные)</span>}
         </div>
@@ -147,7 +147,7 @@ export default function QuestionRunner({ questions, onAnswer, onFinish, title, s
               onKeyDown={(e) => e.key === "Enter" && textVal.trim() && submit(textVal.trim())}
               inputMode={effType === "numeric" ? "decimal" : "text"} data-testid="answer-input"
               placeholder={effType === "numeric" ? "Введите число" : "Введите ответ"}
-              className="flex-1 px-4 py-3 rounded-xl border-2 border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]" />
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#B0862A]" />
             <button onClick={() => textVal.trim() && submit(textVal.trim())} disabled={submitting || !textVal.trim()}
               data-testid="check-answer-btn" className="btn-accent disabled:opacity-50">Проверить</button>
           </div>
@@ -167,7 +167,7 @@ export default function QuestionRunner({ questions, onAnswer, onFinish, title, s
                 <ArrowRight className="w-4 h-4 text-[#8A94A6] shrink-0" />
                 <select value={matchSel[i] ?? ""} disabled={!!feedback} data-testid={`match-select-${i}`}
                   onChange={(e) => setMatchSel((m) => ({ ...m, [i]: e.target.value === "" ? "" : Number(e.target.value) }))}
-                  className="flex-1 px-3 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#7C66DC]">
+                  className="flex-1 px-3 py-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3] outline-none focus:border-[#B0862A]">
                   <option value="">— выбери —</option>
                   {(q.match_right || []).map((r, j) => <option key={j} value={j}>{j + 1}. {r}</option>)}
                 </select>
@@ -186,12 +186,12 @@ export default function QuestionRunner({ questions, onAnswer, onFinish, title, s
           <div className="mt-6 space-y-2" data-testid="ordering-block">
             {order.map((o, i) => (
               <div key={o.orig} className="flex items-center gap-2 p-3 rounded-xl border border-[#E5DEC9] bg-[#FAF8F3]">
-                <span className="w-7 h-7 rounded-lg bg-[#7C66DC] text-white flex items-center justify-center text-sm font-semibold shrink-0">{i + 1}</span>
+                <span className="w-7 h-7 rounded-lg bg-[#C9A227] text-[#1E2A4A] flex items-center justify-center text-sm font-semibold shrink-0">{i + 1}</span>
                 <span className="flex-1 text-sm text-[#1E2A4A]">{o.item}</span>
                 {!feedback && (
                   <div className="flex flex-col">
-                    <button onClick={() => moveOrder(i, -1)} data-testid={`order-up-${i}`} className="p-1 text-[#7C66DC] hover:bg-[#EEEAFB] rounded"><ArrowUp className="w-4 h-4" /></button>
-                    <button onClick={() => moveOrder(i, 1)} data-testid={`order-down-${i}`} className="p-1 text-[#7C66DC] hover:bg-[#EEEAFB] rounded"><ArrowDown className="w-4 h-4" /></button>
+                    <button onClick={() => moveOrder(i, -1)} data-testid={`order-up-${i}`} className="p-1 text-[#B0862A] hover:bg-[#F6EFDA] rounded"><ArrowUp className="w-4 h-4" /></button>
+                    <button onClick={() => moveOrder(i, 1)} data-testid={`order-down-${i}`} className="p-1 text-[#B0862A] hover:bg-[#F6EFDA] rounded"><ArrowDown className="w-4 h-4" /></button>
                   </div>
                 )}
               </div>
@@ -219,7 +219,7 @@ export default function QuestionRunner({ questions, onAnswer, onFinish, title, s
                         <td key={c} className="px-2 py-1.5">
                           <input value={tableVals[thisBi] || ""} disabled={!!feedback} data-testid={`table-input-${thisBi}`}
                             onChange={(e) => setTableVals((t) => ({ ...t, [thisBi]: e.target.value }))}
-                            className="w-full px-2 py-1.5 rounded-lg border border-[#E5DEC9] bg-white outline-none focus:border-[#7C66DC]" />
+                            className="w-full px-2 py-1.5 rounded-lg border border-[#E5DEC9] bg-white outline-none focus:border-[#B0862A]" />
                         </td>); }
                       return <td key={c} className="px-3 py-2 text-[#1E2A4A]">{cell}</td>;
                     })}
@@ -259,7 +259,7 @@ export default function QuestionRunner({ questions, onAnswer, onFinish, title, s
             </div>
             <div className="flex items-center gap-3 mt-4 flex-wrap">
               {showAskAI && (
-                <button onClick={() => showAskAI(q)} data-testid="ask-ai-btn" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-[#7C66DC] bg-[#EEEAFB] hover:bg-[#E3DCF7]">
+                <button onClick={() => showAskAI(q)} data-testid="ask-ai-btn" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-[#B0862A] bg-[#F6EFDA] hover:bg-[#E3DCF7]">
                   <Sparkles className="w-4 h-4" /> Спросить Фили
                 </button>
               )}

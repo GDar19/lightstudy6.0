@@ -63,8 +63,8 @@ export default function TopicPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             {topic.lessons.map((l) => (
               <Link key={l.id} to={`/app/lessons/${l.id}`} data-testid={`lesson-link-${l.id}`} className="ls-card p-5 hover:shadow-lg transition-shadow flex items-center gap-4">
-                <div className="w-11 h-11 rounded-xl bg-[#EEEAFB] flex items-center justify-center shrink-0">
-                  <BookOpen className="w-5 h-5 text-[#7C66DC]" />
+                <div className="w-11 h-11 rounded-xl bg-[#F6EFDA] flex items-center justify-center shrink-0">
+                  <BookOpen className="w-5 h-5 text-[#B0862A]" />
                 </div>
                 <div>
                   <div className="font-medium text-[#1E2A4A]">{l.title}</div>

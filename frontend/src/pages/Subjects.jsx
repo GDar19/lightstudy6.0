@@ -48,7 +48,7 @@ export default function Subjects() {
             <div className="flex gap-2 mt-5">
               <Link to={`/app/subjects/${s.id}`} className="btn-primary text-sm flex-1 text-center">Открыть</Link>
               <button onClick={() => navigate(`/app/diagnostic/${s.id}`)} data-testid={`diagnostic-btn-${s.id}`}
-                className="px-4 py-2.5 rounded-xl text-sm font-medium border border-[#7C66DC]/30 text-[#7C66DC] hover:bg-[#EEEAFB]">
+                className="px-4 py-2.5 rounded-xl text-sm font-medium border border-[#B0862A]/30 text-[#B0862A] hover:bg-[#F6EFDA]">
                 Диагностика
               </button>
             </div>

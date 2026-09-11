@@ -6,7 +6,7 @@ import {
   Bell, Shield, PenLine,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { Logo, Wizard } from "./common";
+import { Logo } from "./common";
 import { api } from "../api/client";
 
 const NAV = [
@@ -36,7 +36,7 @@ function NavItems({ onClick, isAdmin }) {
           className={({ isActive }) =>
             `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
               isActive
-                ? "bg-[#7C66DC] text-white shadow-md"
+                ? "bg-[#C9A227] text-[#1E2A4A] shadow-md font-semibold"
                 : "text-[#B8C0D0] hover:text-white hover:bg-white/8"
             }`
           }
@@ -52,7 +52,7 @@ function NavItems({ onClick, isAdmin }) {
           data-testid="nav-admin"
           className={({ isActive }) =>
             `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              isActive ? "bg-[#7C66DC] text-white shadow-md" : "text-[#B8C0D0] hover:text-white hover:bg-white/8"
+              isActive ? "bg-[#C9A227] text-[#1E2A4A] shadow-md font-semibold" : "text-[#B8C0D0] hover:text-white hover:bg-white/8"
             }`
           }
         >
@@ -96,15 +96,14 @@ export default function AppLayout({ children }) {
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-[#182238] fixed inset-y-0 left-0 z-30">
         <div className="px-5 py-5 flex items-center gap-2.5">
-          <img src="/mascot.png" alt="LightStudy" className="w-9 h-9 rounded-xl object-cover" />
-          <span className="font-display font-extrabold text-lg text-white">LightStudy</span>
+          <Logo variant="light" size={34} />
         </div>
         <div className="flex-1 overflow-y-auto py-2">
           <NavItems isAdmin={isAdmin} />
         </div>
         <div className="p-3 border-t border-white/10">
           <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-9 h-9 rounded-full bg-[#7C66DC] flex items-center justify-center text-white font-semibold text-sm">
+            <div className="w-9 h-9 rounded-full bg-[#C9A227] flex items-center justify-center text-[#1E2A4A] font-bold text-sm">
               {(user?.name || "?").slice(0, 1).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
@@ -124,12 +123,11 @@ export default function AppLayout({ children }) {
           <Menu className="w-6 h-6" />
         </button>
         <div className="flex items-center gap-2">
-          <img src="/mascot.png" alt="LightStudy" className="w-8 h-8 rounded-lg object-cover" />
-          <span className="font-display font-extrabold text-white">LightStudy</span>
+          <Logo variant="light" size={28} />
         </div>
         <button onClick={openNotifs} className="text-white p-1.5 relative" data-testid="notif-btn-mobile">
           <Bell className="w-5 h-5" />
-          {unread > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-[#7C66DC] rounded-full" />}
+          {unread > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-[#C9A227] rounded-full" />}
         </button>
       </div>
 
@@ -140,8 +138,7 @@ export default function AppLayout({ children }) {
           <aside className="absolute inset-y-0 left-0 w-72 bg-[#182238] flex flex-col animate-fade-up">
             <div className="px-5 py-5 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img src="/mascot.png" alt="LightStudy" className="w-9 h-9 rounded-xl object-cover" />
-                <span className="font-display font-extrabold text-lg text-white">LightStudy</span>
+                <Logo variant="light" size={30} />
               </div>
               <button onClick={() => setMobileOpen(false)} className="text-white p-1"><X className="w-6 h-6" /></button>
             </div>
@@ -164,7 +161,7 @@ export default function AppLayout({ children }) {
           <div className="relative">
             <button onClick={openNotifs} data-testid="notif-btn" className="relative p-2 rounded-xl hover:bg-[#F0EBE1] text-[#4B5563]">
               <Bell className="w-5 h-5" />
-              {unread > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#7C66DC] rounded-full" />}
+              {unread > 0 && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#C9A227] rounded-full" />}
             </button>
             {showNotifs && (
               <div className="absolute right-0 mt-2 w-80 ls-card p-2 z-50" data-testid="notif-panel">

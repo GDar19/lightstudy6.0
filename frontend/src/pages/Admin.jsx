@@ -44,14 +44,14 @@ export default function Admin() {
   return (
     <div className="animate-fade-up">
       <div className="flex items-center gap-2 mb-6">
-        <Shield className="w-6 h-6 text-[#7C66DC]" />
+        <Shield className="w-6 h-6 text-[#B0862A]" />
         <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#1E2A4A]">Админ-панель</h1>
       </div>
 
       <div className="flex gap-2 mb-6 overflow-x-auto">
         {TABS.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} data-testid={`admin-tab-${t.id}`}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium ${tab === t.id ? "bg-[#7C66DC] text-white" : "bg-[#F0EBE1] text-[#1E2A4A] hover:bg-[#E2DACB]"}`}>
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium ${tab === t.id ? "bg-[#C9A227] text-[#1E2A4A]" : "bg-[#F0EBE1] text-[#1E2A4A] hover:bg-[#E2DACB]"}`}>
             <t.icon className="w-4 h-4" /> {t.label}
           </button>
         ))}
@@ -79,7 +79,7 @@ export default function Admin() {
                 <tr key={u.id} className="border-t border-[#E5DEC9]" data-testid={`admin-user-${u.id}`}>
                   <td className="px-5 py-3 text-[#1E2A4A] font-medium">{u.name}</td>
                   <td className="px-5 py-3 text-[#4B5563]">{u.email}</td>
-                  <td className="px-5 py-3">{u.role === "admin" ? <span className="text-[#7C66DC] font-medium">admin</span> : "student"}</td>
+                  <td className="px-5 py-3">{u.role === "admin" ? <span className="text-[#B0862A] font-medium">admin</span> : "student"}</td>
                   <td className="px-5 py-3 text-[#8A94A6]">{(u.subjects || []).length}</td>
                 </tr>
               ))}
