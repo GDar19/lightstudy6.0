@@ -4,6 +4,48 @@ import { CalendarDays, Check, Circle, RefreshCw, Compass } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/api/client";
 import { Loader, EmptyState, DifficultyBadge, ACTIVITY_LABEL } from "@/components/common";
+import { Lock, CheckCircle2 } from "lucide-react";
+
+function CurriculumPanel({ subjectIds }) {
+  const [progs, setProgs] = useState([]);
+  useEffect(() => {
+    Promise.all(subjectIds.map((s) => api.curriculumProgress(s).then((r) => r.data).catch(() => null)))
+      .then((list) => setProgs(list.filter(Boolean)));
+  }, [subjectIds.join(",")]); // eslint-disable-line
+  if (progs.length === 0) return null;
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 mb-8" data-testid="curriculum-panel">
+      {progs.map((p) => (
+        <div key={p.subject_id} className="ls-card p-5" data-testid={`curriculum-${p.subject_id}`}>
+          <div className="flex items-center justify-between mb-1">
+            <div className="font-display font-bold text-[#1E2A4A]">{p.subject_name}</div>
+            <div className="text-xs text-[#8A94A6]">{p.topics_mastered}/{p.total_topics} тем · {p.curriculum_progress}%</div>
+          </div>
+          <div className="h-2 rounded-full bg-[#E5DEC9] overflow-hidden mb-3">
+            <div className="h-full bg-[#7C66DC] transition-all" style={{ width: `${p.curriculum_progress}%` }} />
+          </div>
+          {p.curriculum_completed ? (
+            <div className="text-sm text-[#10B981] inline-flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Программа пройдена!</div>
+          ) : p.current_topic && (
+            <>
+              <div className="text-sm text-[#4B5563]">Текущая тема: <span className="font-semibold text-[#1E2A4A]">{p.current_topic.title}</span>
+                {p.current_topic.state === "mastered" ? <span className="text-[#10B981]"> ✓ освоено</span> : <span className="text-[#8A94A6]"> · {p.current_topic.mastery}%</span>}
+              </div>
+              <div className="h-1.5 rounded-full bg-[#F0EBE1] overflow-hidden my-1.5">
+                <div className="h-full bg-[#10B981]" style={{ width: `${Math.min(100, (p.current_topic.mastery / p.mastery_threshold) * 100)}%` }} />
+              </div>
+              {p.next_topic && (
+                <div className="text-xs text-[#8A94A6] inline-flex items-center gap-1 mt-1" data-testid={`curriculum-next-${p.subject_id}`}>
+                  Следующая: {p.next_topic.title} <Lock className="w-3 h-3" />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function StudyPlan() {
   const [plan, setPlan] = useState(null);
@@ -77,6 +119,8 @@ export default function StudyPlan() {
           <RefreshCw className={`w-4 h-4 ${regen ? "animate-spin" : ""}`} /> Обновить план
         </button>
       </div>
+
+      <CurriculumPanel subjectIds={[...new Set(plan.items.map((i) => i.subject_id))]} />
 
       <div className="space-y-6">
         {dates.map((date) => {

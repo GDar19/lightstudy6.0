@@ -73,6 +73,13 @@ export const api = {
   studyPlan: () => client.get("/study-plan"),
   generatePlan: () => client.post("/study-plan/generate"),
   patchPlanItem: (id, d) => client.patch(`/study-plan/items/${id}`, d),
+  // curriculum engine
+  curriculum: (sid) => client.get(`/curriculum/${sid}`),
+  curriculumProgress: (sid) => client.get(`/curriculum/${sid}/progress`),
+  adminCurriculum: (subject_id) => client.get("/admin/curriculum", { params: subject_id ? { subject_id } : {} }),
+  createCurriculum: (d) => client.post("/admin/curriculum", d),
+  updateCurriculum: (id, d) => client.patch(`/admin/curriculum/${id}`, d),
+  deleteCurriculum: (id) => client.delete(`/admin/curriculum/${id}`),
   // practice
   startPractice: (d) => client.post("/practice/start", d),
   practiceAnswer: (d) => client.post("/practice/answer", d),

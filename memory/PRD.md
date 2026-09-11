@@ -65,6 +65,15 @@ profile & difficulty update → next task. Real data only (zeros/empty states fo
 - Polish fixes applied to KnowledgeBase.jsx: delete confirmation dialog, delete/poll race guard (removedRef), Russian pluralization (1 фрагмент/страница), data-testid on search subject select.
 - Admin creds: admin@lightstudy.ru / admin123. KB is a TAB in /app/admin, not a route.
 
+## Curriculum Engine (2026-06) — sequential progression ✅
+Layered on existing architecture (no rewrite). Curriculum is source of truth for topic ORDER; student results decide pace; AI does not choose topics.
+- New coll **`curriculum`** {id, subject_id, section_id, topic_id, subtopic_id, title, description, order, ege_task_numbers, prerequisite_ids, is_active} — seeded idempotently from `content_data.SUBJECTS` with explicit `order`.
+- **`knowledge`** extended (backward-compat, write-through): `state` (not_started/learning/mastered), `curriculum_id`, `started_at`, `mastered_at`. Existing records/attempts preserved (matched by subject_id+topic_id).
+- `curriculum.py`: `is_topic_mastered` (uses `question_attempts` + `compute_mastery`, requires ≥`MIN_MASTERY_ATTEMPTS=6` valid attempts AND mastery≥`MASTERY_THRESHOLD=80`; easy-only capped by DIFFICULTY_CEILING so can't hit 80), `subject_progress/current_topic/next_topic`, and curriculum-driven `generate_study_plan` (NO ranked[:14]; per-subject first non-mastered topic → lesson/practice/retest; interleaves subjects, keeps within-subject order; preserves done items).
+- `routes_plan.py` now imports `generate_study_plan` from `curriculum`.
+- New `routes_curriculum.py`: `GET /curriculum/{sid}`, `/progress`, `/current`, `/next`; admin `GET/POST/PATCH/DELETE /admin/curriculum`.
+- Frontend: `StudyPlan.jsx` curriculum panel (per-subject % / current topic / next 🔒); `AdminCurriculum.jsx` + Admin «Программа» tab (order/edit/toggle/add). Lesson content, RAG, Fili, admin bank, mock, diagnostics unchanged.
+
 ## Plan lessons + Fili placement (2026-06) — targeted change ✅ (self-tested)
 - `StudyPlan.jsx`: plan items of type "Урок" now show a **«Начать урок»** button that opens the real lesson (resolves the topic's lesson via `api.topic`, navigates to `/app/lessons/:id`); non-lesson items keep «Начать» → practice.
 - `seed.py`: auto-seeds one lesson for **every topic** lacking one (reusing real published bank questions as mini-questions + explanations), so all plan "Урок" activities open a working lesson through the existing lesson system.

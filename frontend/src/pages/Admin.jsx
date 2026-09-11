@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Shield, Users, HelpCircle, BarChart3, BookOpen, Database } from "lucide-react";
+import { Shield, Users, HelpCircle, BarChart3, BookOpen, Database, ListOrdered } from "lucide-react";
 import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import { Loader, EmptyState } from "@/components/common";
 import KnowledgeBase from "@/pages/KnowledgeBase";
 import AdminTasks from "@/pages/AdminTasks";
+import AdminCurriculum from "@/pages/AdminCurriculum";
 
 const TABS = [
   { id: "stats", label: "Дашборд", icon: BarChart3 },
   { id: "users", label: "Пользователи", icon: Users },
   { id: "subjects", label: "Предметы", icon: BookOpen },
+  { id: "curriculum", label: "Программа", icon: ListOrdered },
   { id: "kb", label: "База знаний", icon: Database },
   { id: "questions", label: "Задания", icon: HelpCircle },
 ];
@@ -106,6 +108,7 @@ export default function Admin() {
       )}
 
       {tab === "questions" && <AdminTasks subjects={subjects} topics={topics} />}
+      {tab === "curriculum" && <AdminCurriculum subjects={subjects} />}
     </div>
   );
 }

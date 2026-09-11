@@ -13,7 +13,7 @@ from db import client
 from seed import run_seed
 import routes_auth, routes_user, routes_content, routes_diagnostic
 import routes_plan, routes_practice, routes_mistakes, routes_dashboard
-import routes_ai, routes_mock, routes_admin, routes_kb, routes_media, routes_solution
+import routes_ai, routes_mock, routes_admin, routes_kb, routes_media, routes_solution, routes_curriculum
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -31,7 +31,7 @@ async def root():
 
 for module in [routes_auth, routes_user, routes_content, routes_diagnostic,
                routes_plan, routes_practice, routes_mistakes, routes_dashboard,
-               routes_ai, routes_mock, routes_admin, routes_kb, routes_media, routes_solution]:
+               routes_ai, routes_mock, routes_admin, routes_kb, routes_media, routes_solution, routes_curriculum]:
     api_router.include_router(module.router)
 
 app.include_router(api_router)
@@ -49,6 +49,8 @@ app.add_middleware(
 async def on_startup():
     try:
         await run_seed()
+        import curriculum as CUR
+        await CUR.seed_curriculum()
         logger.info("Seed completed")
     except Exception as e:
         logger.exception("Seed failed: %s", e)

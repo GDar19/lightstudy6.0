@@ -4,7 +4,7 @@ from typing import Optional
 
 from db import db, clean, clean_list
 from auth_utils import get_current_user
-from logic import generate_study_plan
+from curriculum import generate_study_plan
 
 router = APIRouter()
 
