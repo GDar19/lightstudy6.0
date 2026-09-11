@@ -65,6 +65,13 @@ profile & difficulty update → next task. Real data only (zeros/empty states fo
 - Polish fixes applied to KnowledgeBase.jsx: delete confirmation dialog, delete/poll race guard (removedRef), Russian pluralization (1 фрагмент/страница), data-testid on search subject select.
 - Admin creds: admin@lightstudy.ru / admin123. KB is a TAB in /app/admin, not a route.
 
+## Plan lessons + Fili placement (2026-06) — targeted change ✅ (self-tested)
+- `StudyPlan.jsx`: plan items of type "Урок" now show a **«Начать урок»** button that opens the real lesson (resolves the topic's lesson via `api.topic`, navigates to `/app/lessons/:id`); non-lesson items keep «Начать» → practice.
+- `seed.py`: auto-seeds one lesson for **every topic** lacking one (reusing real published bank questions as mini-questions + explanations), so all plan "Урок" activities open a working lesson through the existing lesson system.
+- `TopicPage.jsx`: removed the top **«Фили объяснит»** button (and its now-unreachable explain UI); «Практика» stays.
+- Fili remains only inside lessons (`LessonPage` «Фили объяснит» → full `/app/tutor` chat with lesson context, unchanged).
+- Tests: TEST1 (6 «Начать урок» buttons), TEST2 (opens real lesson), TEST3 (topic top Fili removed), TEST4 (lesson Fili → tutor with context), TEST5 (no regressions) — all pass.
+
 ## Admin-controlled task bank (2026-06) — Phase 5 ✅ (iteration_10, backend 19/19, all 7 acceptance tests pass)
 Core principle enforced: **ADMIN CREATES → VERIFIES → PUBLISHES → STUDENT SOLVES**. AI never creates/publishes bank tasks (kept disabled for future use).
 

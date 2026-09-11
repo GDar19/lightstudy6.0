@@ -2,7 +2,7 @@
 import os
 from datetime import datetime, timezone
 
-from db import db
+from db import db, clean_list
 from auth_utils import hash_password, verify_password, new_id, now_iso
 import content_data as C
 import content_extra as E
@@ -97,6 +97,29 @@ async def seed_content():
         # attach/refresh interactive tasks on existing lessons
         for topic_id, tasks in E.INTERACTIVE_TASKS.items():
             await db.lessons.update_many({"topic_id": topic_id}, {"$set": {"interactive_tasks": tasks}})
+
+    # Ensure EVERY topic has at least one lesson so any plan "Урок" activity can open a real
+    # lesson via the existing lesson system. Auto-built lessons reuse real published bank questions.
+    idx = C.topic_index()
+    for tid, info in idx.items():
+        if await db.lessons.count_documents({"topic_id": tid}) > 0:
+            continue
+        bank = clean_list(await db.questions.find(
+            {"topic_id": tid, "status": "published", "type": "single_choice"}).to_list(6))
+        key_points = [q["explanation"] for q in bank if q.get("explanation")][:4]
+        mini = [{"question": q["question"], "options": q.get("options", []), "answer": q.get("answer", 0)}
+                for q in bank if q.get("options")][:3]
+        lesson = {
+            "id": f"l_{info['subject_id']}_{tid}_0",
+            "subject_id": info["subject_id"], "topic_id": tid,
+            "title": info["name"],
+            "duration": 15, "difficulty": "medium",
+            "explanation": f"Тема «{info['name']}» по предмету «{info['subject_name']}». "
+                           "Изучи ключевые идеи ниже, затем реши задания. Если что-то непонятно — нажми «Фили объяснит».",
+            "key_points": key_points, "formulas": [], "examples": [],
+            "mini_questions": mini, "interactive_tasks": E.INTERACTIVE_TASKS.get(tid, []),
+        }
+        await db.lessons.insert_one(lesson)
 
     # Textbooks
     for i, t in enumerate(C.TEXTBOOKS):
